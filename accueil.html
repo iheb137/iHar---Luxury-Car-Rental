@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IHAR Location de Voitures - Accueil</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        header {
+            background-color: #003366;
+            color: white;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .contact-header {
+            background-color: #f8f9fa;
+            padding: 0.8rem;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+
+        nav {
+            background-color: #004d99;
+            padding: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        nav a:hover {
+            background-color: #0066cc;
+        }
+
+        .hero {
+            height: 500px;
+            background-image: url('agence.webp');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-align: center;
+            position: relative;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.6);
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            max-width: 800px;
+            padding: 2rem;
+        }
+
+        .hero-content h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 0.8rem 1.5rem;
+            background-color: #003366;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: background-color 0.3s;
+            font-weight: bold;
+        }
+
+        .btn:hover {
+            background-color: #004d99;
+        }
+
+        .minimum-price-banner {
+            background-color: hsl(0, 89%, 33%);
+            color: white;
+            text-align: center;
+            padding: 1rem;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        footer {
+            background-color: #003366;
+            color: white;
+            padding: 3rem;
+            text-align: center;
+            margin-top: 2rem;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+
+        .footer-section h3 {
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="contact-header">
+        <p>📞 Contactez-nous : 28478199 / 24591619 | 📍 Rue des meres Manar 1</p>
+    </div>
+
+    <header>
+        <h1>IHAR Location de Voitures</h1>
+        <p>Location de voitures de luxe et premium en Tunisie</p>
+    </header>
+
+    <nav>
+        <ul>
+            <li><a href="accueil.html">Accueil</a></li>
+            <li><a href="vehicules.html">Nos Véhicules</a></li>
+            <li><a href="services.html">Services</a></li>
+            <li><a href="contact.html">Contact</a></li>
+            <li><a href="reclamation.html">Reclamation</a></li>
+            <li><a href="reservation.html">réservation en ligne</a></li>
+        </ul>
+    </nav>
+
+    <div class="hero">
+        <div class="hero-content">
+            <h2>Découvrez notre flotte de véhicules premium</h2>
+            <p>Des voitures de luxe et haut de gamme pour tous vos déplacements en Tunisie</p>
+            <a href="vehicules.html" class="btn">Explorer notre flotte</a>
+        </div>
+    </div>
+
+    <div class="minimum-price-banner">
+        "Profitez d'une remise de 10 % pour toute location de 10 jours ou plus !"
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>IHAR Location de Voitures</h3>
+                <p>Votre partenaire de confiance pour la location de véhicules premium en Tunisie</p>
+            </div>
+            <div class="footer-section">
+                <h3>Contactez-nous</h3>
+                <p>📍 Rue des meres Manar 1</p>
+                <p>📞 28478199 / 24591619</p>
+            </div>
+            <div class="footer-section">
+                <h3>Horaires d'ouverture</h3>
+                <p>Lundi - Samedi : 8h00 - 19h00</p>
+                <p>Dimanche : 9h00 - 13h00</p>
+            </div>
+        </div>
+        <p style="margin-top: 2rem;">&copy; 2024 IHAR Location de Voitures. Tous droits réservés. <a href="login.php" style="color: inherit; text-decoration: none;">·</a></p>
+    
+    </footer>
+    <script src="accueil.js"></script>
+</body>
+</html>

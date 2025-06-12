@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Réservation - IHAR Location de Voitures</title>
+    <style>
+        /* Style identique aux pages précédentes */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-image: url('agence.webp'); /* Ton image ici */
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            min-height: 100vh;
+        }
+
+
+        header {
+            background-color: #003366;
+            color: white;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .contact-header {
+            background-color: #f8f9fa;
+            padding: 0.8rem;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+
+        nav {
+            background-color: #004d99;
+            padding: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        nav a:hover {
+            background-color: #0066cc;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 0.8rem 1.5rem;
+            background-color: #003366;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: background-color 0.3s;
+            font-weight: bold;
+        }
+
+        .btn:hover {
+            background-color: #004d99;
+        }
+
+        footer {
+            background-color: #003366;
+            color: white;
+            padding: 3rem;
+            text-align: center;
+            margin-top: 2rem;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+
+        .footer-section h3 {
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+
+        /* Styles spécifiques à la page de réservation */
+        .reservation-container {
+            max-width: 800px;
+            margin: 3rem auto;
+            padding: 2rem;
+            background-color: #f9f9f9;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #003366;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="contact-header">
+        <p>📞 Contactez-nous : 28478199 / 24591619 | 📍 Rue des meres Manar 1</p>
+    </div>
+
+    <header>
+        <h1>IHAR Location de Voitures</h1>
+        <p>Location de voitures de luxe et premium en Tunisie</p>
+    </header>
+
+    <nav>
+        <ul>
+            <li><a href="accueil.html">Accueil</a></li>
+            <li><a href="vehicules.html">Nos Véhicules</a></li>
+            <li><a href="services.html">Services</a></li>
+            <li><a href="contact.html">Contact</a></li>
+            <li><a href="reclamation.html">Reclamation</a></li>
+            <li><a href="reservation.html">réservation en ligne</a></li>
+        </ul>
+    </nav>
+
+    <div class="reservation-container">
+        <h2 style="text-align: center; color: #003366; margin-bottom: 2rem;">Réservation de Véhicule</h2>
+        <form id="reservationForm">
+            <div class="form-group">
+                <label for="nom">Nom Complet</label>
+                <input type="text" id="nom" name="nom" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="telephone">Téléphone</label>
+                <input type="tel" id="telephone" name="telephone" required>
+            </div>
+            <div class="form-group">
+                <label for="vehicule">Véhicule</label>
+                <select id="vehicule" name="vehicule" required>
+                    <option value="">Sélectionnez un véhicule</option>
+                    <option value="mercedes-e">Mercedes Classe E</option>
+                    <option value="bmw-5">BMW Série 5</option>
+                    <option value="audi-q7">Audi Q7</option>
+                    <option value="range-rover">Range Rover Sport</option>
+                    <option value="tiguan">Volkswagen Tiguan</option>
+                    <option value="mercedes-c">Mercedes Classe C</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="date-debut">Date de début</label>
+                <input type="date" id="date-debut" name="date-debut" required>
+            </div>
+            <div class="form-group">
+                <label for="date-fin">Date de fin</label>
+                <input type="date" id="date-fin" name="date-fin" required>
+            </div>
+            <button type="submit" class="btn submit-btn">Réserver</button>
+        </form>
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>IHAR Location de Voitures</h3>
+                <p>Votre partenaire de confiance pour la location de véhicules premium en Tunisie</p>
+            </div>
+            <div class="footer-section">
+                <h3>Contactez-nous</h3>
+                <p>📍 Rue des meres Manar 1</p>
+                <p>📞 28478199 / 24591619</p>
+            </div>
+            <div class="footer-section">
+                <h3>Horaires d'ouverture</h3>
+                <p>Lundi - Samedi : 8h00 - 19h00</p>
+                <p>Dimanche : 9h00 - 13h00</p>
+            </div>
+        </div>
+        <p style="margin-top: 2rem;">&copy; 2024 IHAR Location de Voitures. Tous droits réservés.</p>
+    </footer>
+    <script src="reservation.js"></script>
+</body>
+</html>

@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nos Véhicules - IHAR Location de Voitures</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-image: url('agence.webp'); /* Ton image ici */
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            min-height: 100vh;
+        }
+
+
+        header {
+            background-color: #003366;
+            color: white;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .contact-header {
+            background-color: #f8f9fa;
+            padding: 0.8rem;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+
+        nav {
+            background-color: #004d99;
+            padding: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        nav a:hover {
+            background-color: #0066cc;
+        }
+
+        .cars-container {
+            padding: 3rem 2rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            background-color: transparent;
+        }
+
+        .car-card {
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+            background-color: rgba(255,255,255,0.8);
+        }
+
+        .car-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+
+        .car-image {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+        }
+
+        .car-info {
+            padding: 1.5rem;
+        }
+
+        .car-info h3 {
+            margin-bottom: 0.5rem;
+            color: #003366;
+        }
+
+        .car-features {
+            margin: 1rem 0;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .car-price {
+            color: #003366;
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin: 1rem 0;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 0.8rem 1.5rem;
+            background-color: #003366;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: background-color 0.3s;
+            font-weight: bold;
+        }
+
+        .btn:hover {
+            background-color: #004d99;
+        }
+
+        .section-title {
+    text-align: center;
+    margin: 3rem 0;
+    color: #003366;
+    font-size: 2.5rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    position: relative;
+    padding-bottom: 15px;
+    font-family: 'Montserrat', sans-serif;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.section-title::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 3px;
+    background: linear-gradient(to right, #003366, #0066cc, #003366);
+    border-radius: 3px;
+}
+
+.section-title:hover {
+    transform: scale(1.02);
+    transition: transform 0.3s ease;
+}
+
+        footer {
+            background-color: #003366;
+            color: white;
+            padding: 3rem;
+            text-align: center;
+            margin-top: 2rem;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+
+        .footer-section h3 {
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="contact-header">
+        <p>📞 Contactez-nous : 28478199 / 24591619 | 📍 Rue des meres Manar 1</p>
+    </div>
+
+    <header>
+        <h1>IHAR Location de Voitures</h1>
+        <p>Location de voitures de luxe et premium en Tunisie</p>
+    </header>
+
+    <nav>
+        <ul>
+            <li><a href="accueil.html">Accueil</a></li>
+            <li><a href="vehicules.html">Nos Véhicules</a></li>
+            <li><a href="services.html">Services</a></li>
+            <li><a href="contact.html">Contact</a></li>
+            <li><a href="reclamation.html">Reclamation</a></li>
+            <li><a href="reservation.html">réservation en ligne</a></li>
+        </ul>
+    </nav>
+
+    <h2 class="section-title">Notre Flotte de Véhicules</h2>
+
+    <section id="vehicules" class="cars-container">
+        <div class="car-card">
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR_RzDRpGNIG3QkaPVhQ780Yxt6JzjdxGU6MA&s.jpeg" alt="Mercedes Classe E" class="car-image">
+            <div class="car-info">
+                <h3>Mercedes Classe E</h3>
+                <div class="car-features">
+                    <p>✓ Berline de luxe</p>
+                    <p>✓ Intérieur cuir</p>
+                    <p>✓ GPS intégré</p>
+                </div>
+                <p class="car-price">280 TND/jour</p>
+                <a href="reservation.html" class="btn">Réserver</a>
+            </div>
+        </div>
+
+        <div class="car-card">
+            <img src="https://galerie.automobile.tn/min/2024/04/bmw-serie-5-520i-pack-m-83193.jpg" alt="BMW Série 5" class="car-image">
+            <div class="car-info">
+                <h3>BMW Série 5</h3>
+                <div class="car-features">
+                    <p>✓ Berline sportive</p>
+                    <p>✓ Sièges sport</p>
+                    <p>✓ Système audio premium</p>
+                </div>
+                <p class="car-price">280 TND/jour</p>
+                <a href="reservation.html" class="btn">Réserver</a>
+            </div>
+        </div>
+
+        <div class="car-card">
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRlQgRuAAUuSl-2F6Y3fV7iVqCRhz_YF_xseQ&s.jpeg" alt="Audi Q7" class="car-image">
+            <div class="car-info">
+                <h3>Audi Q7</h3>
+                <div class="car-features">
+                    <p>✓ SUV premium</p>
+                    <p>✓ 7 places</p>
+                    <p>✓ Toit panoramique</p>
+                </div>
+                <p class="car-price">320 TND/jour</p>
+                <a href="reservation.html" class="btn">Réserver</a>
+            </div>
+        </div>
+
+        <div class="car-card">
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSno9wRSC7UmY0flLg5Jv2sjryvY_18pNstOg&s.jpeg" alt="Range Rover Sport" class="car-image">
+            <div class="car-info">
+                <h3>Range Rover Sport</h3>
+                <div class="car-features">
+                    <p>✓ SUV de luxe</p>
+                    <p>✓ Intérieur premium</p>
+                    <p>✓ Système tout-terrain</p>
+                </div>
+                <p class="car-price">350 TND/jour</p>
+                <a href="reservation.html" class="btn">Réserver</a>
+            </div>
+        </div>
+
+        <div class="car-card">
+            <img src="https://www.sayarti.tn/wp-content/uploads/2024/09/prix-tiguan-volkswagen-tunisie.jpg" alt="Volkswagen Tiguan" class="car-image">
+            <div class="car-info">
+                <h3>Volkswagen Tiguan</h3>
+                <div class="car-features">
+                    <p>✓ SUV compact</p>
+                    <p>✓ Caméra de recul</p>
+                    <p>✓ Climatisation auto</p>
+                </div>
+                <p class="car-price">180 TND/jour</p>
+                <a href="reservation.html" class="btn">Réserver</a>
+            </div>
+        </div>
+
+        <div class="car-card">
+            <img src="https://galerie.automobile.tn/min/2021/11/mercedes-benz-classe-c-180-eq-boost-9g-tronic-avantgarde-60761.jpg" alt="Mercedes Classe C" class="car-image">
+            <div class="car-info">
+                <h3>Mercedes Classe C</h3>
+                <div class="car-features">
+                    <p>✓ Berline compacte</p>
+                    <p>✓ Pack AMG</p>
+                    <p>✓ Full options</p>
+                </div>
+                <p class="car-price">220 TND/jour</p>
+                <a href="reservation.html" class="btn">Réserver</a>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>IHAR Location de Voitures</h3>
+                <p>Votre partenaire de confiance pour la location de véhicules premium en Tunisie</p>
+            </div>
+            <div class="footer-section">
+                <h3>Contactez-nous</h3>
+                <p>📍 Rue des meres Manar 1</p>
+                <p>📞 28478199 / 24591619</p>
+            </div>
+            <div class="footer-section">
+                <h3>Horaires d'ouverture</h3>
+                <p>Lundi - Samedi : 8h00 - 19h00</p>
+                <p>Dimanche : 9h00 - 13h00</p>
+            </div>
+        </div>
+        <p style="margin-top: 2rem;">&copy; 2024 IHAR Location de Voitures. Tous droits réservés.</p>
+    </footer>
+</body>
+</html>

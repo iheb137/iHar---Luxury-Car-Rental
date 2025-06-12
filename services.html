@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nos Services - IHAR Location de Voitures</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        header {
+            background-color: #003366;
+            color: white;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .contact-header {
+            background-color: #f8f9fa;
+            padding: 0.8rem;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+
+        nav {
+            background-color: #004d99;
+            padding: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        nav a:hover {
+            background-color: #0066cc;
+        }
+
+        .services-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            padding: 3rem 2rem;
+            background-color: #f7f9fc;
+            text-align: center;
+        }
+
+        .service-item {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .service-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .service-item h3 {
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+            color: #003366;
+        }
+
+        .service-item p {
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .service-icon {
+            font-size: 2.5rem;
+            color: #0066cc;
+            margin-bottom: 1rem;
+        }
+
+        footer {
+            background-color: #003366;
+            color: white;
+            padding: 3rem;
+            text-align: center;
+            margin-top: 2rem;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+
+        .footer-section h3 {
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="contact-header">
+        <p>📞 Contactez-nous : 28478199 / 24591619 | 📍 Rue des meres Manar 1</p>
+    </div>
+
+    <header>
+        <h1>Nos Services</h1>
+        <p>Des services complets pour vous offrir une expérience de location de voitures exceptionnelle</p>
+    </header>
+
+    <nav>
+        <ul>
+            <li><a href="accueil.html">Accueil</a></li>
+            <li><a href="vehicules.html">Nos Véhicules</a></li>
+            <li><a href="services.html">Services</a></li>
+            <li><a href="contact.html">Contact</a></li>
+            <li><a href="reclamation.html">Réclamation</a></li>
+            <li><a href="reservation.html">Réservation en ligne</a></li>
+        </ul>
+    </nav>
+
+    <div class="services-container">
+        <div class="service-item">
+            <div class="service-icon">🛡️</div>
+            <h3>Assurance Tous Risques</h3>
+            <p>Une couverture complète pour rouler en toute sérénité, peu importe les imprévus.</p>
+        </div>
+        <div class="service-item">
+            <div class="service-icon">🚗📦</div>
+            <h3>Livraison & Retrait à Domicile</h3>
+            <p>Faites-vous livrer ou récupérer votre voiture directement où vous le souhaitez.</p>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>IHAR Location de Voitures</h3>
+                <p>Votre partenaire de confiance pour la location de véhicules premium en Tunisie</p>
+            </div>
+            <div class="footer-section">
+                <h3>Contactez-nous</h3>
+                <p>📍 Rue des meres Manar 1</p>
+                <p>📞 28478199 / 24591619</p>
+            </div>
+            <div class="footer-section">
+                <h3>Horaires d'ouverture</h3>
+                <p>Lundi - Samedi : 8h00 - 19h00</p>
+                <p>Dimanche : 9h00 - 13h00</p>
+            </div>
+        </div>
+        <p>&copy; 2024 IHAR Location de Voitures. Tous droits réservés.</p>
+    </footer>
+    <script src="service.js"></script>
+</body>
+</html>
+
