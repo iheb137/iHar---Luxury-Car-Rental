@@ -2,33 +2,28 @@ pipeline {
     agent any
 
     environment {
-        // Credential SSH configuré dans Jenkins
-        SSH_CRED = 'ssh-cred'
-        DEPLOY_USER = 'iheb'            // Ton utilisateur sur le serveur LAMP
-        DEPLOY_HOST = 'IP_OU_HOSTNAME'  // Remplace par l'IP ou le nom de ton serveur LAMP
-        DEPLOY_PATH = '/var/www/html/laap' // Chemin sur le serveur LAMP où copier les fichiers
+        GIT_REPO = 'git@github.com:iheb137/iHar---Luxury-Car-Rental.git'
+        BRANCH = 'master'
+        DEPLOY_USER = 'saafi'
+        DEPLOY_HOST = '10.167.80.144'
+        DEPLOY_PATH = '/var/www/iHar'
+        SSH_CREDENTIALS = 'jenkins-ssh-key' // Le credential SSH que tu as ajouté dans Jenkins
     }
 
     stages {
-        stage('Checkout') {
+        stage('Clone Repository') {
             steps {
-                git branch: 'master',
-                    url: 'git@github.com:TON_UTILISATEUR/TON_REPO.git'
+                git branch: "${BRANCH}", url: "${GIT_REPO}"
             }
         }
 
-        stage('Build') {
+        stage('Deploy to Server') {
             steps {
-                echo 'Pas de build nécessaire pour HTML/CSS/JS/PHP'
-            }
-        }
-
-        stage('Deploy') {
-            steps {
-                echo 'Déploiement sur le serveur LAMP via SSH'
-                sshagent([SSH_CRED]) {
+                sshagent([SSH_CREDENTIALS]) {
                     sh """
-                        rsync -avz --delete ./ ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}
+                        ssh -o StrictHostKeyChecking=no ${DEPLOY_USER}@${DEPLOY_HOST} 'mkdir -p ${DEPLOY_PATH}'
+                        rsync -avz --delete ./ ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/
+                        ssh ${DEPLOY_USER}@${DEPLOY_HOST} 'cd ${DEPLOY_PATH} && composer install || echo "Composer not found"'
                     """
                 }
             }
@@ -37,10 +32,10 @@ pipeline {
 
     post {
         success {
-            echo 'Déploiement réussi ✅'
+            echo 'Deployment succeeded!'
         }
         failure {
-            echo 'Échec du déploiement ❌'
+            echo 'Deployment failed!'
         }
     }
 }
