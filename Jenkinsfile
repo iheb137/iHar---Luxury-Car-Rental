@@ -2,58 +2,50 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "car-rental:${GIT_COMMIT}"
+        BRANCH_NAME = 'master'
+        SERVER_USER = 'ton_user'           // utilisateur SSH sur le serveur
+        SERVER_HOST = 'ton_serveur_ip'     // IP ou domaine du serveur
+        SERVER_PATH = '/var/www/ihar'      // chemin sur le serveur
+        SSH_CREDENTIALS = 'ssh-cred'       // ID Jenkins de tes credentials SSH
     }
 
     stages {
+
         stage('Checkout') {
             steps {
-                git url: 'https://github.com/iheb137/iHar---Luxury-Car-Rental.git', branch: 'master'
+                git branch: "${BRANCH_NAME}", url: 'https://github.com/iheb137/iHar---Luxury-Car-Rental.git'
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Test PHP/JS') {
             steps {
-                // Construction de l'image Docker localement sur l'hôte
-                sh 'docker build -t $DOCKER_IMAGE .'
+                // Si tu as des tests PHPUnit ou JS, ajoute ici
+                echo "✅ Étape de test (à personnaliser si tu as des tests)"
             }
         }
 
-        stage('Push Docker Image (Optional)') {
+        stage('Deploy to Server') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-cred', 
-                                                  usernameVariable: 'DOCKER_USER', 
-                                                  passwordVariable: 'DOCKER_PASS')]) {
-                    sh '''
-                        echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
-                        docker tag $DOCKER_IMAGE $DOCKER_USER/$DOCKER_IMAGE
-                        docker push $DOCKER_USER/$DOCKER_IMAGE
-                    '''
+                script {
+                    sshagent(['ssh-credentials-id']) {
+                        sh """
+                        rsync -avz --delete ./ ${SERVER_USER}@${SERVER_HOST}:${SERVER_PATH}
+                        """
+                    }
                 }
-            }
-        }
-
-        stage('Deploy to Minikube') {
-            steps {
-                withCredentials([file(credentialsId: 'minikube-kubeconfig', variable: 'KUBECONFIG')]) {
-                    sh 'kubectl apply -f deployment.yaml'
-                }
-            }
-        }
-
-        stage('Smoke Test') {
-            steps {
-                sh 'curl -f http://localhost:8080 || exit 1'
             }
         }
     }
 
     post {
         always {
-            echo '✅ Pipeline terminé !'
+            cleanWs()
+        }
+        success {
+            echo "✅ Déploiement sur LAMP réussi !"
         }
         failure {
-            echo '❌ Quelque chose a échoué dans le pipeline !'
+            echo "❌ Échec du déploiement."
         }
     }
 }
