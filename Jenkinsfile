@@ -2,50 +2,45 @@ pipeline {
     agent any
 
     environment {
-        BRANCH_NAME = 'master'
-        SERVER_USER = 'ton_user'           // utilisateur SSH sur le serveur
-        SERVER_HOST = 'ton_serveur_ip'     // IP ou domaine du serveur
-        SERVER_PATH = '/var/www/ihar'      // chemin sur le serveur
-        SSH_CREDENTIALS = 'ssh-cred'       // ID Jenkins de tes credentials SSH
+        // Credential SSH configuré dans Jenkins
+        SSH_CRED = 'ssh-cred'
+        DEPLOY_USER = 'iheb'            // Ton utilisateur sur le serveur LAMP
+        DEPLOY_HOST = 'IP_OU_HOSTNAME'  // Remplace par l'IP ou le nom de ton serveur LAMP
+        DEPLOY_PATH = '/var/www/html/laap' // Chemin sur le serveur LAMP où copier les fichiers
     }
 
     stages {
-
         stage('Checkout') {
             steps {
-                git branch: "${BRANCH_NAME}", url: 'https://github.com/iheb137/iHar---Luxury-Car-Rental.git'
+                git branch: 'master',
+                    url: 'git@github.com:TON_UTILISATEUR/TON_REPO.git'
             }
         }
 
-        stage('Test PHP/JS') {
+        stage('Build') {
             steps {
-                // Si tu as des tests PHPUnit ou JS, ajoute ici
-                echo "✅ Étape de test (à personnaliser si tu as des tests)"
+                echo 'Pas de build nécessaire pour HTML/CSS/JS/PHP'
             }
         }
 
-        stage('Deploy to Server') {
+        stage('Deploy') {
             steps {
-                script {
-                    sshagent(['ssh-credentials-id']) {
-                        sh """
-                        rsync -avz --delete ./ ${SERVER_USER}@${SERVER_HOST}:${SERVER_PATH}
-                        """
-                    }
+                echo 'Déploiement sur le serveur LAMP via SSH'
+                sshagent([SSH_CRED]) {
+                    sh """
+                        rsync -avz --delete ./ ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}
+                    """
                 }
             }
         }
     }
 
     post {
-        always {
-            cleanWs()
-        }
         success {
-            echo "✅ Déploiement sur LAMP réussi !"
+            echo 'Déploiement réussi ✅'
         }
         failure {
-            echo "❌ Échec du déploiement."
+            echo 'Échec du déploiement ❌'
         }
     }
 }
