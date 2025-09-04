@@ -1,61 +1,49 @@
 pipeline {
-    agent none
+    agent any
 
     environment {
-        IMAGE_NAME = "car-rental"
+        DOCKER_IMAGE = "car-rental:${GIT_COMMIT}"
     }
 
     stages {
-
         stage('Checkout') {
-            agent any
             steps {
                 git url: 'https://github.com/iheb137/iHar---Luxury-Car-Rental.git', branch: 'master'
             }
         }
 
         stage('Build Docker Image') {
-            agent {
-                docker {
-                    image 'docker:20.10.24'
-                    args '-v /var/run/docker.sock:/var/run/docker.sock -v $PWD:/workspace -w /workspace'
-                }
-            }
             steps {
-                script {
-                    // Build Docker image
-                    sh "docker build -t ${IMAGE_NAME}:${GIT_COMMIT} ."
-                }
+                // Construction de l'image Docker localement sur l'hôte
+                sh 'docker build -t $DOCKER_IMAGE .'
             }
         }
 
-        stage('Push Docker Image to DockerHub') {
-            agent any
+        stage('Push Docker Image (Optional)') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-cred', 
-                                                 usernameVariable: 'DOCKER_USERNAME', 
-                                                 passwordVariable: 'DOCKER_PASSWORD')]) {
-                    sh 'docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD'
-                    sh "docker tag ${IMAGE_NAME}:${GIT_COMMIT} $DOCKER_USERNAME/${IMAGE_NAME}:${GIT_COMMIT}"
-                    sh "docker push $DOCKER_USERNAME/${IMAGE_NAME}:${GIT_COMMIT}"
+                                                  usernameVariable: 'DOCKER_USER', 
+                                                  passwordVariable: 'DOCKER_PASS')]) {
+                    sh '''
+                        echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+                        docker tag $DOCKER_IMAGE $DOCKER_USER/$DOCKER_IMAGE
+                        docker push $DOCKER_USER/$DOCKER_IMAGE
+                    '''
                 }
             }
         }
 
         stage('Deploy to Minikube') {
-            agent any
             steps {
                 withCredentials([file(credentialsId: 'minikube-kubeconfig', variable: 'KUBECONFIG')]) {
-                    // Apply Kubernetes deployment
                     sh 'kubectl apply -f deployment.yaml'
                 }
             }
         }
 
         stage('Smoke Test') {
-            agent any
             steps {
-                sh 'curl http://localhost:8080'
+                sh 'curl -f http://localhost:8080 || exit 1'
             }
         }
     }
@@ -64,11 +52,8 @@ pipeline {
         always {
             echo '✅ Pipeline terminé !'
         }
-        success {
-            echo '🎉 Déploiement réussi !'
-        }
         failure {
-            echo '❌ Échec du pipeline.'
+            echo '❌ Quelque chose a échoué dans le pipeline !'
         }
     }
 }
