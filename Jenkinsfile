@@ -4,12 +4,14 @@ pipeline {
     APP_NAME = 'car-rental'
     K8S_NAMESPACE = 'dev'
   }
+
   stages {
     stage('Checkout') {
       steps {
         checkout scm
       }
     }
+
     stage('Docker Build + Load into Minikube') {
       steps {
         sh '''
@@ -21,6 +23,7 @@ pipeline {
         '''
       }
     }
+
     stage('Deploy to Minikube') {
       steps {
         sh '''
@@ -33,17 +36,24 @@ pipeline {
         '''
       }
     }
-    stage('Smoke test') {
+
+    stage('Smoke Test') {
       steps {
         sh '''
           set -e
-          kubectl port-forward -n dev svc/${APP_NAME} 8080:80 >/tmp/pf.log 2>&1 &
-          PF_PID=$!
-          sleep 5
-          curl -f http://127.0.0.1:8080/ || (cat /tmp/pf.log; exit 1)
-          kill $PF_PID || true
+          NODE_IP=$(minikube ip)
+          URL="http://$NODE_IP:30080/"
+          echo "Testing app at $URL"
+          curl -f $URL || (echo "❌ App not reachable"; exit 1)
+          echo "✅ App reachable at $URL"
         '''
       }
+    }
+  }
+
+  post {
+    always {
+      echo "Pipeline terminé avec statut: ${currentBuild.currentResult}"
     }
   }
 }
