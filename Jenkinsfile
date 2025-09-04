@@ -4,7 +4,7 @@ pipeline {
     APP_NAME = 'car-rental'
     K8S_NAMESPACE = 'dev'
 
-    # Docker TLS pour Minikube
+    // Docker TLS pour Minikube
     DOCKER_HOST = 'tcp://127.0.0.1:52440'
     DOCKER_TLS_VERIFY = '1'
     DOCKER_CERT_PATH = '/var/jenkins_home/.minikube/certs'
