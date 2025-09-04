@@ -3,7 +3,11 @@ pipeline {
   environment {
     APP_NAME = 'car-rental'
     K8S_NAMESPACE = 'dev'
-    DOCKERHUB_USER = 'iheb99'   // adapte avec ton vrai username DockerHub
+
+    # Docker TLS pour Minikube
+    DOCKER_HOST = 'tcp://127.0.0.1:52440'
+    DOCKER_TLS_VERIFY = '1'
+    DOCKER_CERT_PATH = '/var/jenkins_home/.minikube/certs'
   }
 
   stages {
@@ -13,49 +17,41 @@ pipeline {
       }
     }
 
-    stage('Docker Build & Push') {
+    stage('Build Docker image on Minikube') {
       steps {
-        script {
-          def IMAGE_TAG = "${APP_NAME}:${env.BUILD_NUMBER}"
-          def IMAGE_REMOTE = "${DOCKERHUB_USER}/${APP_NAME}:${env.BUILD_NUMBER}"
+        sh '''
+          set -e
+          IMAGE=${APP_NAME}:$(git rev-parse --short HEAD)
+          echo "==> Building image on Minikube Docker daemon: $IMAGE"
 
-          sh """
-            echo "==> Build local image: ${IMAGE_TAG}"
-            docker build -t ${IMAGE_TAG} .
-            
-            echo "==> Tag image for DockerHub"
-            docker tag ${IMAGE_TAG} ${IMAGE_REMOTE}
-          """
-
-          withCredentials([usernamePassword(credentialsId: 'dockerhub-cred', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-            sh """
-              echo "==> Login DockerHub"
-              echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-              
-              echo "==> Push image to DockerHub"
-              docker push ${IMAGE_REMOTE}
-              
-              docker logout
-            """
-          }
-        }
+          docker --tlsverify \
+            --tlscacert=$DOCKER_CERT_PATH/ca.pem \
+            --tlscert=$DOCKER_CERT_PATH/cert.pem \
+            --tlskey=$DOCKER_CERT_PATH/key.pem \
+            -H $DOCKER_HOST build -t $IMAGE .
+          
+          echo "==> Images on Minikube:"
+          docker --tlsverify \
+            --tlscacert=$DOCKER_CERT_PATH/ca.pem \
+            --tlscert=$DOCKER_CERT_PATH/cert.pem \
+            --tlskey=$DOCKER_CERT_PATH/key.pem \
+            -H $DOCKER_HOST images | grep ${APP_NAME} || true
+        '''
       }
     }
 
     stage('Deploy to Minikube') {
       steps {
-        withKubeConfig([credentialsId: 'kubeconfig-dev']) {
+        withCredentials([file(credentialsId: 'kubeconfig-dev', variable: 'KUBECONFIG')]) {
           sh '''
             set -e
-            IMAGE_REMOTE='iheb99/car-rental:'${BUILD_NUMBER}
+            IMAGE=${APP_NAME}:$(git rev-parse --short HEAD)
+            echo "==> Deploying $IMAGE to Kubernetes namespace ${K8S_NAMESPACE}"
 
-            echo "==> Deploy image ${IMAGE_REMOTE} to Minikube"
-            kubectl create namespace ${K8S_NAMESPACE} || true
-            sed "s|IMAGE_PLACEHOLDER|${IMAGE_REMOTE}|g" k8s/deployment.yaml | kubectl apply -n ${K8S_NAMESPACE} -f -
-            kubectl apply -n ${K8S_NAMESPACE} -f k8s/service.yaml
-
-            echo "==> Wait for rollout"
-            kubectl rollout status deployment/${APP_NAME} -n ${K8S_NAMESPACE} --timeout=120s
+            kubectl --kubeconfig=$KUBECONFIG create namespace ${K8S_NAMESPACE} || true
+            sed "s|IMAGE_PLACEHOLDER|${IMAGE}|g" k8s/deployment.yaml | kubectl --kubeconfig=$KUBECONFIG apply -n ${K8S_NAMESPACE} -f -
+            kubectl --kubeconfig=$KUBECONFIG apply -n ${K8S_NAMESPACE} -f k8s/service.yaml
+            kubectl --kubeconfig=$KUBECONFIG rollout status deployment/${APP_NAME} -n ${K8S_NAMESPACE} --timeout=120s
           '''
         }
       }
@@ -63,13 +59,13 @@ pipeline {
 
     stage('Smoke Test') {
       steps {
-        withKubeConfig([credentialsId: 'kubeconfig-dev']) {
+        withCredentials([file(credentialsId: 'kubeconfig-dev', variable: 'KUBECONFIG')]) {
           sh '''
             set -e
-            NODE_IP=$(minikube ip)
+            NODE_IP=$(kubectl --kubeconfig=$KUBECONFIG get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
             URL="http://$NODE_IP:30080/"
             echo "Testing app at $URL"
-            curl -f $URL || (echo "❌ App not reachable"; exit 1)
+            curl -f $URL || (echo "❌ App not reachable"; kubectl --kubeconfig=$KUBECONFIG get pods -n ${K8S_NAMESPACE}; kubectl --kubeconfig=$KUBECONFIG logs -l app=${APP_NAME} -n ${K8S_NAMESPACE} --tail=200; exit 1)
             echo "✅ App reachable at $URL"
           '''
         }
