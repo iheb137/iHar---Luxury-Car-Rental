@@ -7,6 +7,7 @@ spec:
     app: car-rental
   ports:
     - protocol: TCP
-      port: 80
-      targetPort: 80
-  type: ClusterIP
+      port: 80          # le port interne du conteneur Apache
+      targetPort: 80    # idem
+      nodePort: 30080   # le port accessible depuis ton hôte
+  type: NodePort
