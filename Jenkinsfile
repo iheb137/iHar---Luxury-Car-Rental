@@ -1,59 +1,35 @@
 pipeline {
     agent any
-    environment {
-        IMAGE_NAME = "car-rental"
-    }
     stages {
         stage('Checkout') {
             steps {
-                git url: 'https://github.com/iheb137/iHar---Luxury-Car-Rental.git', branch: 'master'
+                git url: 'https://github.com/iheb137/iHar---Luxury-Car-Rental.git', credentialsId: 'iheb137/******', branch: 'master'
             }
         }
-
         stage('Build Docker Image on Minikube') {
             steps {
                 script {
-                    withCredentials([file(credentialsId: 'minikube-kubeconfig', variable: 'KUBECONFIG')]) {
-                        sh """
-                        echo "Building Docker image on Minikube..."
-                        eval \$(minikube -p minikube docker-env)
-                        docker build -t \$IMAGE_NAME:\$(git rev-parse --short HEAD) .
-                        """
-                    }
+                    // Utiliser un agent Docker si Minikube n'est pas disponible directement
+                    sh 'docker build -t car-rental:${GIT_COMMIT} .'
                 }
             }
         }
-
         stage('Deploy to Minikube') {
             steps {
-                script {
-                    withCredentials([file(credentialsId: 'minikube-kubeconfig', variable: 'KUBECONFIG')]) {
-                        sh """
-                        echo "Deploying to Minikube..."
-                        kubectl --kubeconfig=\$KUBECONFIG apply -f k8s/deployment.yaml
-                        kubectl --kubeconfig=\$KUBECONFIG apply -f k8s/service.yaml
-                        """
-                    }
+                withCredentials([file(credentialsId: 'minikube-kubeconfig', variable: 'KUBECONFIG')]) {
+                    sh 'kubectl apply -f deployment.yaml'
                 }
             }
         }
-
         stage('Smoke Test') {
             steps {
-                sh """
-                echo "Running basic smoke test..."
-                # Exemple : curl sur le service
-                kubectl --kubeconfig=\$KUBECONFIG get pods
-                """
+                sh 'curl http://localhost:8080' // Ajuster selon ton endpoint
             }
         }
     }
     post {
-        success {
-            echo "Pipeline terminé avec succès !"
-        }
-        failure {
-            echo "Pipeline échoué !"
+        always {
+            echo 'Pipeline terminé !'
         }
     }
 }
