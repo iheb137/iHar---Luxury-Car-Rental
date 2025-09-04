@@ -1,37 +1,59 @@
 pipeline {
     agent any
-
     environment {
-        IMAGE = "car-rental:${GIT_COMMIT}"
+        IMAGE_NAME = "car-rental"
     }
-
     stages {
         stage('Checkout') {
             steps {
-                checkout scm
+                git url: 'https://github.com/iheb137/iHar---Luxury-Car-Rental.git', branch: 'master'
             }
         }
 
         stage('Build Docker Image on Minikube') {
             steps {
-                sh '''
-                    set -e
-                    echo "==> Building Docker image on Minikube..."
-                    docker --tlsverify \
-                        --tlscacert=/var/jenkins_home/.minikube/certs/ca.pem \
-                        --tlscert=/var/jenkins_home/.minikube/certs/cert.pem \
-                        --tlskey=/var/jenkins_home/.minikube/certs/key.pem \
-                        -H tcp://127.0.0.1:52440 build -t ${IMAGE} .
-                '''
+                script {
+                    withCredentials([file(credentialsId: 'minikube-kubeconfig', variable: 'KUBECONFIG')]) {
+                        sh """
+                        echo "Building Docker image on Minikube..."
+                        eval \$(minikube -p minikube docker-env)
+                        docker build -t \$IMAGE_NAME:\$(git rev-parse --short HEAD) .
+                        """
+                    }
+                }
             }
         }
 
         stage('Deploy to Minikube') {
             steps {
-                sh '''
-                    kubectl --kubeconfig=/var/jenkins_home/.kube/config apply -f k8s-deployment.yaml
-                '''
+                script {
+                    withCredentials([file(credentialsId: 'minikube-kubeconfig', variable: 'KUBECONFIG')]) {
+                        sh """
+                        echo "Deploying to Minikube..."
+                        kubectl --kubeconfig=\$KUBECONFIG apply -f k8s/deployment.yaml
+                        kubectl --kubeconfig=\$KUBECONFIG apply -f k8s/service.yaml
+                        """
+                    }
+                }
             }
+        }
+
+        stage('Smoke Test') {
+            steps {
+                sh """
+                echo "Running basic smoke test..."
+                # Exemple : curl sur le service
+                kubectl --kubeconfig=\$KUBECONFIG get pods
+                """
+            }
+        }
+    }
+    post {
+        success {
+            echo "Pipeline terminé avec succès !"
+        }
+        failure {
+            echo "Pipeline échoué !"
         }
     }
 }
