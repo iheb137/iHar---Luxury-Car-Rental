@@ -1,7 +1,6 @@
 # Utiliser une image de base officielle qui inclut Apache et PHP 8.2
 FROM php:8.2-apache
 
-# --- AJOUT IMPORTANT ---
 # Installer les extensions PHP nécessaires pour se connecter à une base de données MySQL.
 # mysqli est l'extension la plus courante pour les projets PHP/MySQL.
 RUN docker-php-ext-install mysqli && docker-php-ext-enable mysqli
