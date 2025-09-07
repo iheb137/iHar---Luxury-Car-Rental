@@ -2,47 +2,48 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_TLS_VERIFY = "1"
-        DOCKER_HOST = "tcp://host.docker.internal:52440"
-        DOCKER_CERT_PATH = "/var/jenkins_home/.minikube/certs"
-        IMAGE_NAME = "car-rental"
+        GIT_CREDENTIALS = 'iheb'          // clé SSH GitHub que tu as ajoutée
+        DOCKER_CREDENTIALS = 'dockerhub-cred' // login/pwd DockerHub
+        DOCKER_IMAGE = "iheb137/luxury-car-rental"
     }
 
     stages {
         stage('Checkout') {
             steps {
-                sshagent(credentials: ['ssh-cred']) {
-                    git branch: 'master',
-                        url: 'git@github.com:iheb137/iHar---Luxury-Car-Rental.git'
-                }
+                git branch: 'master',
+                    url: 'git@github.com:iheb137/iHar---Luxury-Car-Rental.git',
+                    credentialsId: "${GIT_CREDENTIALS}"
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh '''
-                    echo "==> Building Docker image..."
-                    docker build -t $IMAGE_NAME:$BUILD_NUMBER .
-                '''
+                script {
+                    sh 'docker build -t $DOCKER_IMAGE:latest .'
+                }
+            }
+        }
+
+        stage('Login & Push to DockerHub') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh """
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        docker push $DOCKER_IMAGE:latest
+                    """
+                }
             }
         }
 
         stage('Deploy to Minikube') {
             steps {
-                sh '''
-                    echo "==> Deploying to Minikube..."
-                    kubectl apply -f k8s/deployment.yaml
-                    kubectl apply -f k8s/service.yaml
-                '''
-            }
-        }
-
-        stage('Smoke Test') {
-            steps {
-                sh '''
-                    echo "==> Running Smoke Test..."
-                    kubectl rollout status deployment/car-rental-deployment
-                '''
+                script {
+                    sh '''
+                        kubectl config use-context minikube
+                        kubectl apply -f k8s/deployment.yaml
+                        kubectl apply -f k8s/service.yaml
+                    '''
+                }
             }
         }
     }
