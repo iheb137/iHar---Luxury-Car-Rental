@@ -12,7 +12,6 @@ pipeline {
     stages {
 
         // --- ÉTAPE 1: Installation des outils ---
-        // Cette étape prépare l'environnement en installant Docker et kubectl.
         stage('Install Tools') {
             steps {
                 echo "Installation des outils nécessaires (Docker & kubectl)..."
@@ -23,12 +22,14 @@ pipeline {
 
                     # --- Installation du client Docker ---
                     echo "Installation du client Docker..."
-                    curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+                    # --- CORRECTION APPLIQUÉE ICI ---
+                    # On ajoute les options --batch et --yes pour que la commande gpg ne soit pas interactive
+                    curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor --batch --yes -o /usr/share/keyrings/docker-archive-keyring.gpg
+                    
                     echo \
                       "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian \
                       $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
                     apt-get update
-                    # On installe SEULEMENT le client, pas le serveur complet
                     apt-get install -y docker-ce-cli
                     docker --version
 
@@ -40,8 +41,6 @@ pipeline {
                 '''
             }
         }
-
-        // L'étape de Checkout est implicite et déjà faite par Jenkins au tout début
 
         // --- ÉTAPE 2: Build & Push sur Docker Hub ---
         stage('Build & Push Docker Image') {
