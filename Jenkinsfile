@@ -1,5 +1,5 @@
 // =================================================================
-// == JENKINSFILE FINAL (AVEC CREDENTIALS KUBERNETES SÉPARÉS) ==
+// == JENKINSFILE FINAL ET PROFESSIONNEL ==
 // =================================================================
 
 pipeline {
@@ -8,10 +8,7 @@ pipeline {
     environment {
         DOCKER_IMAGE = "iheb99/luxury-car-rental"
         DOCKER_CREDENTIALS_ID = 'dockerhub-cred'
-        // On définit les IDs de nos 3 nouveaux credentials
-        MINIKUBE_CA_CERT_ID = 'minikube-ca-cert'
-        MINIKUBE_CLIENT_CERT_ID = 'minikube-client-cert'
-        MINIKUBE_CLIENT_KEY_ID = 'minikube-client-key'
+        KUBECONFIG_CREDENTIALS_ID = 'minikube-config'
     }
 
     stages {
@@ -29,28 +26,26 @@ pipeline {
 
         stage('Deploy to Kubernetes') {
             steps {
-                withCredentials([
-                    file(credentialsId: MINIKUBE_CA_CERT_ID, variable: 'CA_CERT'),
-                    file(credentialsId: MINIKUBE_CLIENT_CERT_ID, variable: 'CLIENT_CERT'),
-                    file(credentialsId: MINIKUBE_CLIENT_KEY_ID, variable: 'CLIENT_KEY')
-                ]) {
-                    echo "Déploiement sur le cluster (authentifié via certificats séparés)..."
+                // withKubeConfig va utiliser notre texte secret corrigé
+                withKubeConfig([credentialsId: KUBECONFIG_CREDENTIALS_ID]) {
+                    echo "Déploiement sur le cluster (authentifié via kubeconfig)..."
                     sh '''
-                        # On utilise l'IP réelle de Minikube car Jenkins tourne aussi dans Docker
-                        export KUBESERVER="https://172.17.0.2:8443"
-
+                        # On vérifie la connexion pour être sûr
+                        kubectl cluster-info
+                        
                         echo "--> Déploiement de MySQL..."
-                        kubectl apply --server=$KUBESERVER --certificate-authority=$CA_CERT --client-key=$CLIENT_KEY --client-certificate=$CLIENT_CERT -f k8s/mysql.yaml
+                        kubectl apply -f k8s/mysql.yaml
                         
                         echo "--> Mise à jour et déploiement de l'application..."
                         sed -i "s|image: .*|image: ${DOCKER_IMAGE}:latest|g" k8s/deployment.yaml
-                        kubectl apply --server=$KUBESERVER --certificate-authority=$CA_CERT --client-key=$CLIENT_KEY --client-certificate=$CLIENT_CERT -f k8s/deployment.yaml
+                        kubectl apply -f k8s/deployment.yaml
                         
                         echo "--> Exposition du service..."
-                        kubectl apply --server=$KUBESERVER --certificate-authority=$CA_CERT --client-key=$CLIENT_KEY --client-certificate=$CLIENT_CERT -f k8s/service.yaml
+                        kubectl apply -f k8s/service.yaml
                         
-                        echo "--> Vérification du statut du déploiement..."
-                        kubectl rollout status --server=$KUBESERVER --certificate-authority=$CA_CERT --client-key=$CLIENT_KEY --client-certificate=$CLIENT_CERT deployment/car-rental-deployment
+                        echo "--> Vérification du statut des déploiements..."
+                        kubectl rollout status deployment/mysql-deployment
+                        kubectl rollout status deployment/car-rental-deployment
                     '''
                 }
             }
