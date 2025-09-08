@@ -29,8 +29,6 @@ pipeline {
 
         stage('Deploy to Kubernetes') {
             steps {
-                // withCredentials va charger nos 3 fichiers secrets et stocker leur
-                // chemin dans les variables CA_CERT, CLIENT_CERT, et CLIENT_KEY.
                 withCredentials([
                     file(credentialsId: MINIKUBE_CA_CERT_ID, variable: 'CA_CERT'),
                     file(credentialsId: MINIKUBE_CLIENT_CERT_ID, variable: 'CLIENT_CERT'),
@@ -38,10 +36,8 @@ pipeline {
                 ]) {
                     echo "Déploiement sur le cluster (authentifié via certificats séparés)..."
                     sh '''
-                        # On utilise 'minikube' comme nom d'hôte car ils sont sur le même réseau Docker.
-                        export KUBESERVER="https://minikube:8443"
-
-                        # Les variables $CA_CERT, $CLIENT_CERT, $CLIENT_KEY sont fournies par withCredentials.
+                        # On utilise l'IP réelle de Minikube car Jenkins tourne aussi dans Docker
+                        export KUBESERVER="https://172.17.0.2:8443"
 
                         echo "--> Déploiement de MySQL..."
                         kubectl apply --server=$KUBESERVER --certificate-authority=$CA_CERT --client-key=$CLIENT_KEY --client-certificate=$CLIENT_CERT -f k8s/mysql.yaml
