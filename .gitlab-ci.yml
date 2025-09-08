@@ -1,0 +1,32 @@
+# Ce fichier définit la pipeline CI/CD pour GitLab
+
+# On définit les étapes (stages) de notre pipeline
+stages:
+  - build
+  - deploy
+
+# -- ÉTAPE 1: Construire l'image Docker ---
+build_image:
+  stage: build
+  # On utilise une image de base qui contient déjà Docker, avec le service "Docker-in-Docker" (dind)
+  image: docker:latest
+  services:
+    - name: docker:dind
+      alias: docker
+  script:
+    - echo "Connexion au registre GitLab..."
+    # GitLab fournit des variables secrètes automatiquement ! Pas besoin de créer de credentials.
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+    - echo "Construction de l'image Docker..."
+    # On tague l'image avec le nom du registre GitLab et le nom du projet.
+    - docker build -t "$CI_REGISTRY_IMAGE:latest" .
+    - echo "Publication de l'image sur le registre GitLab..."
+    - docker push "$CI_REGISTRY_IMAGE:latest"
+
+# -- ÉTAPE 2: Placeholder pour le déploiement ---
+deploy_placeholder:
+  stage: deploy
+  script:
+    - echo "Étape de déploiement manuelle."
+    - echo "L'image a été poussée avec succès vers le Container Registry de GitLab."
+    - echo "Vous pouvez maintenant la déployer sur Minikube."
