@@ -7,9 +7,8 @@ pipeline {
     agent any
 
     // --- Variables Globales ---
-    // Ces variables sont disponibles dans toutes les étapes.
     environment {
-        // Le nom de l'image Docker, AVEC VOTRE BON NOM D'UTILISATEUR DOCKER HUB.
+        // Le nom de l'image Docker avec votre nom d'utilisateur Docker Hub.
         DOCKER_IMAGE = "iheb99/luxury-car-rental"
         // L'ID des identifiants Docker Hub que vous avez créés dans Jenkins.
         DOCKER_CREDENTIALS_ID = 'dockerhub-cred'
@@ -19,8 +18,6 @@ pipeline {
     stages {
 
         // --- ÉTAPE 1: Installation des Outils ---
-        // Cette étape prépare l'environnement en installant Docker et kubectl.
-        // Elle s'exécute à chaque fois pour garantir un environnement propre.
         stage('Install Tools') {
             steps {
                 echo "Installation des outils nécessaires (Docker & kubectl)..."
@@ -49,7 +46,6 @@ pipeline {
         }
 
         // --- ÉTAPE 2: Build & Push sur Docker Hub ---
-        // Construit l'image Docker et la publie sur votre compte Docker Hub.
         stage('Build & Push Docker Image') {
             steps {
                 script {
@@ -66,36 +62,47 @@ pipeline {
         }
 
         // --- ÉTAPE 3: Déploiement sur Kubernetes ---
-        // Déploie l'application et sa base de données sur Minikube.
         stage('Deploy to Kubernetes') {
             steps {
                  echo "Déploiement sur le cluster Kubernetes..."
                  sh '''
-                    # --- CORRECTION DES CHEMINS KUBECONFIG ---
-                    # Remplace les chemins absolus Windows par des chemins Linux valides dans le conteneur.
-                    # !! VÉRIFIEZ QUE 'saafi' EST BIEN VOTRE NOM D'UTILISATEUR WINDOWS !!
-                    sed -i -e 's|C:\\\\Users\\\\saafi\\.minikube|/root/.minikube|g' /root/.kube/config
+                    # --- Connexion directe à Minikube via son IP ---
+                    export KUBESERVER="https://192.168.49.2:8443"
 
                     echo "--> Déploiement de la base de données MySQL..."
-                    kubectl apply -f k8s/mysql.yaml
+                    kubectl apply --server=$KUBESERVER \
+                                  --certificate-authority=/root/.minikube/ca.crt \
+                                  --client-key=/root/.minikube/profiles/minikube/client.key \
+                                  --client-certificate=/root/.minikube/profiles/minikube/client.crt \
+                                  -f k8s/mysql.yaml
                     
                     echo "--> Mise à jour et déploiement de l'application Car Rental..."
-                    # On met à jour dynamiquement le nom de l'image dans le fichier de déploiement.
                     sed -i "s|image: .*|image: ${DOCKER_IMAGE}:latest|g" k8s/deployment.yaml
-                    kubectl apply -f k8s/deployment.yaml
+                    kubectl apply --server=$KUBESERVER \
+                                  --certificate-authority=/root/.minikube/ca.crt \
+                                  --client-key=/root/.minikube/profiles/minikube/client.key \
+                                  --client-certificate=/root/.minikube/profiles/minikube/client.crt \
+                                  -f k8s/deployment.yaml
                     
                     echo "--> Exposition du service de l'application..."
-                    kubectl apply -f k8s/service.yaml
+                    kubectl apply --server=$KUBESERVER \
+                                  --certificate-authority=/root/.minikube/ca.crt \
+                                  --client-key=/root/.minikube/profiles/minikube/client.key \
+                                  --client-certificate=/root/.minikube/profiles/minikube/client.crt \
+                                  -f k8s/service.yaml
                     
                     echo "--> Vérification du statut du déploiement..."
-                    kubectl rollout status deployment/car-rental-deployment
+                    kubectl rollout status --server=$KUBESERVER \
+                                           --certificate-authority=/root/.minikube/ca.crt \
+                                           --client-key=/root/.minikube/profiles/minikube/client.key \
+                                           --client-certificate=/root/.minikube/profiles/minikube/client.crt \
+                                           deployment/car-rental-deployment
                 '''
             }
         }
     }
     
     // --- Actions Post-Build ---
-    // S'exécute toujours à la fin, que la pipeline réussisse ou échoue.
     post {
         always {
             echo "Pipeline terminée."
