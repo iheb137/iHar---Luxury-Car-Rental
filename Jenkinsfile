@@ -1,26 +1,49 @@
-// Pipeline déclarative, version finale corrigée
+// Jenkinsfile final, autonome, qui installe ses propres dépendances.
 
 pipeline {
-    agent none
+    // On exécute toute la pipeline sur l'agent de base de Jenkins.
+    agent any
 
     environment {
-        DOCKER_IMAGE = "iheb137/luxury-car-rental"
-        DOCKER_CREDENTIALS_ID = 'dockerhub-cred' // VÉRIFIEZ QUE CET ID EST CORRECT
+        DOCKER_IMAGE = "iheb99/luxury-car-rental"
+        DOCKER_CREDENTIALS_ID = 'dockerhub-cred'
     }
 
     stages {
-        stage('Checkout') {
-            agent any
+
+        // --- ÉTAPE 1: Installation des outils ---
+        stage('Install Tools') {
             steps {
-                echo "Récupération du code..."
-                checkout scm
+                echo "Installation des outils nécessaires (Docker & kubectl)..."
+                sh '''
+                    # On met à jour la liste des paquets et on installe les prérequis
+                    apt-get update
+                    apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release
+
+                    # --- Installation du client Docker ---
+                    echo "Installation du client Docker..."
+                    # --- CORRECTION APPLIQUÉE ICI ---
+                    # On ajoute les options --batch et --yes pour que la commande gpg ne soit pas interactive
+                    curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor --batch --yes -o /usr/share/keyrings/docker-archive-keyring.gpg
+                    
+                    echo \
+                      "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian \
+                      $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+                    apt-get update
+                    apt-get install -y docker-ce-cli
+                    docker --version
+
+                    # --- Installation de kubectl ---
+                    echo "Installation de kubectl..."
+                    curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+                    install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+                    kubectl version --client
+                '''
             }
         }
 
+        // --- ÉTAPE 2: Build & Push sur Docker Hub ---
         stage('Build & Push Docker Image') {
-            agent {
-                docker { image 'docker:20.10.17' }
-            }
             steps {
                 script {
                     echo "Construction de l'image Docker: ${DOCKER_IMAGE}:latest"
@@ -35,13 +58,11 @@ pipeline {
             }
         }
 
+        // --- ÉTAPE 3: Déploiement sur Kubernetes ---
         stage('Deploy to Kubernetes') {
-            agent {
-                docker { image 'lachlanevenson/k8s-kubectl:v1.23.3' }
-            }
             steps {
-                echo "Déploiement sur le cluster Kubernetes..."
-                sh '''
+                 echo "Déploiement sur le cluster Kubernetes..."
+                 sh '''
                     echo "--> Déploiement de MySQL..."
                     kubectl apply -f k8s/mysql.yaml
                     
@@ -60,12 +81,8 @@ pipeline {
     
     post {
         always {
-            // CORRECTION: On a enlevé la ligne "agent any" qui était ici.
-            // Les étapes de ce bloc s'exécutent sur l'agent Jenkins par défaut.
-            steps {
-                 echo "Pipeline terminée. Nettoyage de l'espace de travail."
-                 cleanWs()
-            }
+            echo "Pipeline terminée."
+            cleanWs()
         }
     }
 }
