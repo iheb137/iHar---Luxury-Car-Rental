@@ -1,32 +1,24 @@
 // =================================================================
-// == JENKINSFILE FINAL ET OPTIMISÉ POUR UN ENVIRONNEMENT STABLE ==
+// == JENKINSFILE FINAL (AVEC CREDENTIALS KUBERNETES SÉPARÉS) ==
 // =================================================================
 
 pipeline {
-    // On utilise l'agent de base de Jenkins. Il est suffisant car il peut
-    // utiliser le Docker de l'hôte grâce à notre configuration.
     agent any
 
-    // --- Variables Globales ---
     environment {
         DOCKER_IMAGE = "iheb99/luxury-car-rental"
         DOCKER_CREDENTIALS_ID = 'dockerhub-cred'
-        KUBECONFIG_CREDENTIALS_ID = 'minikube-config'
+        // On définit les IDs de nos 3 nouveaux credentials
+        MINIKUBE_CA_CERT_ID = 'minikube-ca-cert'
+        MINIKUBE_CLIENT_CERT_ID = 'minikube-client-cert'
+        MINIKUBE_CLIENT_KEY_ID = 'minikube-client-key'
     }
 
-    // --- Séquence des Étapes ---
     stages {
-
-        // ÉTAPE 1: Construire et Publier l'image Docker
         stage('Build & Push Docker Image') {
             steps {
                 script {
-                    echo "Construction de l'image Docker..."
-                    // La commande 'docker' fonctionne car notre conteneur Jenkins
-                    // est bien configuré (lancé en root avec le socket Docker partagé).
                     sh "docker build -t ${DOCKER_IMAGE}:latest ."
-                    
-                    echo "Publication sur Docker Hub..."
                     withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIALS_ID, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                         sh "echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin"
                         sh "docker push ${DOCKER_IMAGE}:latest"
@@ -35,38 +27,40 @@ pipeline {
             }
         }
 
-        // ÉTAPE 2: Déployer sur Kubernetes
         stage('Deploy to Kubernetes') {
             steps {
-                // La commande 'withKubeConfig' est la méthode la plus propre.
-                // Elle prépare l'environnement pour que 'kubectl' fonctionne
-                // sans problème de chemin ou d'authentification.
-                withKubeConfig([credentialsId: KUBECONFIG_CREDENTIALS_ID]) {
-                    echo "Déploiement sur le cluster (authentifié via kubeconfig)..."
+                // withCredentials va charger nos 3 fichiers secrets et stocker leur
+                // chemin dans les variables CA_CERT, CLIENT_CERT, et CLIENT_KEY.
+                withCredentials([
+                    file(credentialsId: MINIKUBE_CA_CERT_ID, variable: 'CA_CERT'),
+                    file(credentialsId: MINIKUBE_CLIENT_CERT_ID, variable: 'CLIENT_CERT'),
+                    file(credentialsId: MINIKUBE_CLIENT_KEY_ID, variable: 'CLIENT_KEY')
+                ]) {
+                    echo "Déploiement sur le cluster (authentifié via certificats séparés)..."
                     sh '''
-                        # On vérifie la connexion pour être sûr
-                        kubectl cluster-info
-                        
-                        echo "--> Déploiement de la base de données MySQL..."
-                        kubectl apply -f k8s/mysql.yaml
+                        # On utilise 'minikube' comme nom d'hôte car ils sont sur le même réseau Docker.
+                        export KUBESERVER="https://minikube:8443"
+
+                        # Les variables $CA_CERT, $CLIENT_CERT, $CLIENT_KEY sont fournies par withCredentials.
+
+                        echo "--> Déploiement de MySQL..."
+                        kubectl apply --server=$KUBESERVER --certificate-authority=$CA_CERT --client-key=$CLIENT_KEY --client-certificate=$CLIENT_CERT -f k8s/mysql.yaml
                         
                         echo "--> Mise à jour et déploiement de l'application..."
                         sed -i "s|image: .*|image: ${DOCKER_IMAGE}:latest|g" k8s/deployment.yaml
-                        kubectl apply -f k8s/deployment.yaml
+                        kubectl apply --server=$KUBESERVER --certificate-authority=$CA_CERT --client-key=$CLIENT_KEY --client-certificate=$CLIENT_CERT -f k8s/deployment.yaml
                         
                         echo "--> Exposition du service..."
-                        kubectl apply -f k8s/service.yaml
+                        kubectl apply --server=$KUBESERVER --certificate-authority=$CA_CERT --client-key=$CLIENT_KEY --client-certificate=$CLIENT_CERT -f k8s/service.yaml
                         
-                        echo "--> Vérification du statut des déploiements..."
-                        kubectl rollout status deployment/mysql-deployment
-                        kubectl rollout status deployment/car-rental-deployment
+                        echo "--> Vérification du statut du déploiement..."
+                        kubectl rollout status --server=$KUBESERVER --certificate-authority=$CA_CERT --client-key=$CLIENT_KEY --client-certificate=$CLIENT_CERT deployment/car-rental-deployment
                     '''
                 }
             }
         }
     }
     
-    // --- Actions Post-Build ---
     post {
         always {
             echo "Pipeline terminée."
