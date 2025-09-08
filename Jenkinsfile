@@ -66,8 +66,9 @@ pipeline {
             steps {
                  echo "Déploiement sur le cluster Kubernetes..."
                  sh '''
-                    # --- Connexion directe à Minikube via son IP ---
-                    export KUBESERVER="https://192.168.49.2:8443"
+                    # --- CONNEXION SIMPLIFIÉE VIA LE RÉSEAU DOCKER ---
+                    # On utilise 'minikube' comme nom d'hôte car Jenkins et Minikube sont sur le même réseau Docker.
+                    export KUBESERVER="https://minikube:8443"
 
                     echo "--> Déploiement de la base de données MySQL..."
                     kubectl apply --server=$KUBESERVER \
