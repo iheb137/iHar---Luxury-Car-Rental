@@ -5,7 +5,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "iheb137/luxury-car-rental"
+        DOCKER_IMAGE = "iheb99/luxury-car-rental"
         DOCKER_CREDENTIALS_ID = 'dockerhub-cred'
     }
 
