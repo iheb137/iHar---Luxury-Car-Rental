@@ -37,43 +37,42 @@ pipeline {
             }
         }
 
-        stage('Deploy to Kubernetes') {
-            steps {
-                script {
-                    withCredentials([file(credentialsId: KUBECONFIG_CREDENTIALS_ID, variable: 'KUBECONFIG_FILE')]) {
-                        sh '''
-                            // Configuration de l'accès Kubernetes
-                            mkdir -p ~/.kube
-                            cp $KUBECONFIG_FILE ~/.kube/config
-                            
-                            echo "=== VÉRIFICATION DE LA CONNEXION KUBERNETES ==="
-                            kubectl cluster-info
-                            kubectl get nodes
-                            
-                            echo "--> Déploiement de MySQL..."
-                            kubectl apply -f k8s/mysql.yaml
-                            
-                            echo "--> Attente du démarrage de MySQL..."
-                            sleep 30
-                            
-                            echo "--> Déploiement de l'application..."
-                            kubectl apply -f k8s/deployment.yaml
-                            
-                            echo "--> Exposition du service..."
-                            kubectl apply -f k8s/service.yaml
-                            
-                            echo "--> Vérification du statut..."
-                            kubectl rollout status deployment/mysql-deployment --timeout=120s
-                            kubectl rollout status deployment/car-rental-deployment --timeout=120s
-                            
-                            echo "=== ÉTAT FINAL ==="
-                            kubectl get pods,svc,deploy
-                        '''
-                    }
-                }
+       stage('Deploy to Kubernetes') {
+    steps {
+        script {
+            withCredentials([file(credentialsId: KUBECONFIG_CREDENTIALS_ID, variable: 'KUBECONFIG_FILE')]) {
+                sh '''
+                    # Configuration de l'accès Kubernetes
+                    mkdir -p ~/.kube
+                    cp "$KUBECONFIG_FILE" ~/.kube/config
+                    
+                    echo "=== VÉRIFICATION DE LA CONNEXION KUBERNETES ==="
+                    kubectl cluster-info
+                    kubectl get nodes
+                    
+                    echo "--> Déploiement de MySQL..."
+                    kubectl apply -f k8s/mysql.yaml
+                    
+                    echo "--> Attente du démarrage de MySQL..."
+                    sleep 30
+                    
+                    echo "--> Déploiement de l'application..."
+                    kubectl apply -f k8s/deployment.yaml
+                    
+                    echo "--> Exposition du service..."
+                    kubectl apply -f k8s/service.yaml
+                    
+                    echo "--> Vérification du statut..."
+                    kubectl rollout status deployment/mysql-deployment --timeout=120s
+                    kubectl rollout status deployment/car-rental-deployment --timeout=120s
+                    
+                    echo "=== ÉTAT FINAL ==="
+                    kubectl get pods,svc,deploy
+                '''
             }
         }
     }
+}
     
     post {
         always {
