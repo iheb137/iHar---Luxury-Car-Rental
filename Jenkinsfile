@@ -28,11 +28,20 @@ pipeline {
             steps {
                 withKubeConfig([credentialsId: KUBECONFIG_CREDENTIALS_ID]) {
                     sh '''
+                        echo "Vérification de la connexion au cluster..."
                         kubectl cluster-info
+                        
+                        echo "--> Déploiement de MySQL..."
                         kubectl apply -f k8s/mysql.yaml
+                        
+                        echo "--> Mise à jour et déploiement de l'application..."
                         sed -i "s|image: .*|image: ${DOCKER_IMAGE}:latest|g" k8s/deployment.yaml
                         kubectl apply -f k8s/deployment.yaml
+                        
+                        echo "--> Exposition du service..."
                         kubectl apply -f k8s/service.yaml
+                        
+                        echo "--> Vérification du statut des déploiements..."
                         kubectl rollout status deployment/mysql-deployment
                         kubectl rollout status deployment/car-rental-deployment
                     '''
