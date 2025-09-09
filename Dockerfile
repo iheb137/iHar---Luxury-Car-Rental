@@ -2,7 +2,6 @@
 FROM php:8.2-apache
 
 # Installer les extensions PHP nécessaires pour se connecter à une base de données MySQL.
-# mysqli est l'extension la plus courante pour les projets PHP/MySQL.
 RUN docker-php-ext-install mysqli && docker-php-ext-enable mysqli
 
 # Copier le code de l'application dans le dossier web par défaut d'Apache

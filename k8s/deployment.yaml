@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: car-rental-deployment # Nom mis à jour pour plus de clarté
+  name: car-rental-deployment
 spec:
   replicas: 2
   selector:
@@ -14,15 +14,21 @@ spec:
     spec:
       containers:
       - name: car-rental
-        image: iheb137/luxury-car-rental:latest
+        # 
+        # LIGNE IMPORTANTE : C'est le nom exact de votre image sur Docker Hub.
+        # La pipeline Jenkins s'assurera que cette ligne est bien présente
+        # avec le tag ':latest' grâce à la commande "sed".
+        # 
+        image: iheb99/luxury-car-rental:latest
         ports:
         - containerPort: 80
         env:
+        # Ces variables connectent votre application au service MySQL
         - name: DB_HOST
           value: "mysql-service"
         - name: DB_USER
           value: "root"
         - name: DB_PASSWORD
-          value: "iheb" # Utilisez le même que dans mysql.yaml
+          value: "iheb" # Le même que dans mysql.yaml
         - name: DB_NAME
           value: "location_voiture_db"
