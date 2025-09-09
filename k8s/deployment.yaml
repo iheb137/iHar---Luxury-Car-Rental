@@ -1,34 +1,34 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: car-rental-deployment
+  name: jenkins
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
-      app: car-rental
+      app: jenkins
   template:
     metadata:
       labels:
-        app: car-rental
+        app: jenkins
     spec:
+      serviceAccountName: jenkins-admin
       containers:
-      - name: car-rental
-        # 
-        # LIGNE IMPORTANTE : C'est le nom exact de votre image sur Docker Hub.
-        # La pipeline Jenkins s'assurera que cette ligne est bien présente
-        # avec le tag ':latest' grâce à la commande "sed".
-        # 
-        image: iheb99/luxury-car-rental:latest
-        ports:
-        - containerPort: 80
-        env:
-        # Ces variables connectent votre application au service MySQL
-        - name: DB_HOST
-          value: "mysql-service"
-        - name: DB_USER
-          value: "root"
-        - name: DB_PASSWORD
-          value: "iheb" # Le même que dans mysql.yaml
-        - name: DB_NAME
-          value: "location_voiture_db"
+        - name: jenkins
+          image: mon-jenkins:lts # On utilise VOTRE image personnalisée !
+          ports:
+            - name: http-port
+              containerPort: 8080
+            - name: jnlp-port
+              containerPort: 50000
+          volumeMounts:
+            - name: jenkins-home
+              mountPath: /var/jenkins_home
+            - name: docker-sock
+              mountPath: /var/run/docker.sock
+      volumes:
+        - name: jenkins-home
+          emptyDir: {} # Les données seront temporaires pour ce test
+        - name: docker-sock
+          hostPath:
+            path: /var/run/docker.sock
