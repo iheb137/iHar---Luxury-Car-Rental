@@ -1,14 +1,13 @@
-# Utiliser une image PHP avec Apache
 FROM php:8.1-apache
 
-# Installer l'extension MySQL pour PHP
-RUN docker-php-ext-install mysqli pdo pdo_mysql && docker-php-ext-enable mysqli
+# Installer seulement ce qui n’est pas déjà activé
+RUN docker-php-ext-install mysqli
 
-# Copier le projet dans le dossier web d’Apache
+# Copier ton code
 COPY . /var/www/html/
 
-# Donner les bons droits
+# Mettre les bons droits
 RUN chown -R www-data:www-data /var/www/html
 
-# Exposer le port 80
+# Exposer le port
 EXPOSE 80
