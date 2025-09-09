@@ -7,7 +7,7 @@ spec:
     app: car-rental
   ports:
     - protocol: TCP
-      port: 80          # le port interne du conteneur Apache
-      targetPort: 80    # idem
-      nodePort: 30080   # le port accessible depuis ton hôte
+      port: 80
+      targetPort: 80
+      nodePort: 30080 # Port accessible depuis l'extérieur
   type: NodePort
