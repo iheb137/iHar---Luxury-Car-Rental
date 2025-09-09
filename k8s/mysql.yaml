@@ -28,6 +28,6 @@ spec:
         - containerPort: 3306
         env:
         - name: MYSQL_ROOT_PASSWORD
-          value: "votre_mot_de_passe_secret" # Changez ce mot de passe
+          value: "iheb" # Changez ce mot de passe
         - name: MYSQL_DATABASE
           value: "location_voiture_db"
