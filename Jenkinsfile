@@ -9,8 +9,8 @@ pipeline {
         DOCKER_IMAGE = "iheb99/luxury-car-rental"
         DOCKER_CREDENTIALS_ID = 'dockerhub-cred'
         KUBERNETES_TOKEN_ID = 'kubernetes-token'
-        // On utilise l'adresse interne de Kubernetes dans Docker Desktop
-        KUBERNETES_SERVER = 'https://kubernetes.docker.internal:6443'
+        // CORRECTION : On utilise l'adresse interne 'host.docker.internal'
+        KUBERNETES_SERVER = 'https://host.docker.internal:6443'
     }
 
     stages {
@@ -28,12 +28,9 @@ pipeline {
 
         stage('Deploy to Kubernetes') {
             steps {
-                // On injecte le token secret dans une variable d'environnement
                 withCredentials([string(credentialsId: KUBERNETES_TOKEN_ID, variable: 'KUBE_TOKEN')]) {
                     echo "Déploiement sur le cluster (authentifié via Service Account Token)..."
                     sh '''
-                        # On utilise le token pour s'authentifier à chaque commande kubectl
-                        
                         echo "--> Déploiement de MySQL..."
                         kubectl apply --server=${KUBERNETES_SERVER} --token=${KUBE_TOKEN} --insecure-skip-tls-verify=true -f k8s/mysql.yaml
                         
@@ -45,7 +42,6 @@ pipeline {
                         kubectl apply --server=${KUBERNETES_SERVER} --token=${KUBE_TOKEN} --insecure-skip-tls-verify=true -f k8s/service.yaml
                         
                         echo "--> Attente de la fin des déploiements..."
-                        # On attend que le déploiement soit terminé avant de déclarer le succès
                         sleep 15
                         kubectl rollout status --server=${KUBERNETES_SERVER} --token=${KUBE_TOKEN} --insecure-skip-tls-verify=true deployment/mysql-deployment
                         kubectl rollout status --server=${KUBERNETES_SERVER} --token=${KUBE_TOKEN} --insecure-skip-tls-verify=true deployment/car-rental-deployment
