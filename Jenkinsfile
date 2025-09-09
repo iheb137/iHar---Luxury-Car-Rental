@@ -1,5 +1,5 @@
 // =================================================================
-// == JENKINSFILE FINAL POUR DOCKER DESKTOP KUBERNETES ==
+// == JENKINSFILE ULTIME (AVEC AUTHENTIFICATION PAR TOKEN K8S) ==
 // =================================================================
 
 pipeline {
@@ -8,7 +8,9 @@ pipeline {
     environment {
         DOCKER_IMAGE = "iheb99/luxury-car-rental"
         DOCKER_CREDENTIALS_ID = 'dockerhub-cred'
-        KUBECONFIG_CREDENTIALS_ID = 'kubeconfig-host' 
+        KUBERNETES_TOKEN_ID = 'kubernetes-token'
+        // On utilise l'adresse interne de Kubernetes dans Docker Desktop
+        KUBERNETES_SERVER = 'https://kubernetes.docker.internal:6443'
     }
 
     stages {
@@ -26,24 +28,27 @@ pipeline {
 
         stage('Deploy to Kubernetes') {
             steps {
-                withKubeConfig([credentialsId: KUBECONFIG_CREDENTIALS_ID]) {
+                // On injecte le token secret dans une variable d'environnement
+                withCredentials([string(credentialsId: KUBERNETES_TOKEN_ID, variable: 'KUBE_TOKEN')]) {
+                    echo "Déploiement sur le cluster (authentifié via Service Account Token)..."
                     sh '''
-                        echo "Contexte Kubernetes actuel :"
-                        kubectl config current-context
+                        # On utilise le token pour s'authentifier à chaque commande kubectl
                         
                         echo "--> Déploiement de MySQL..."
-                        kubectl apply -f k8s/mysql.yaml
+                        kubectl apply --server=${KUBERNETES_SERVER} --token=${KUBE_TOKEN} --insecure-skip-tls-verify=true -f k8s/mysql.yaml
                         
                         echo "--> Mise à jour et déploiement de l'application..."
                         sed -i "s|image: .*|image: ${DOCKER_IMAGE}:latest|g" k8s/deployment.yaml
-                        kubectl apply -f k8s/deployment.yaml
+                        kubectl apply --server=${KUBERNETES_SERVER} --token=${KUBE_TOKEN} --insecure-skip-tls-verify=true -f k8s/deployment.yaml
                         
                         echo "--> Exposition du service..."
-                        kubectl apply -f k8s/service.yaml
+                        kubectl apply --server=${KUBERNETES_SERVER} --token=${KUBE_TOKEN} --insecure-skip-tls-verify=true -f k8s/service.yaml
                         
-                        echo "--> Vérification du statut des déploiements..."
-                        kubectl rollout status deployment/mysql-deployment
-                        kubectl rollout status deployment/car-rental-deployment
+                        echo "--> Attente de la fin des déploiements..."
+                        # On attend que le déploiement soit terminé avant de déclarer le succès
+                        sleep 15
+                        kubectl rollout status --server=${KUBERNETES_SERVER} --token=${KUBE_TOKEN} --insecure-skip-tls-verify=true deployment/mysql-deployment
+                        kubectl rollout status --server=${KUBERNETES_SERVER} --token=${KUBE_TOKEN} --insecure-skip-tls-verify=true deployment/car-rental-deployment
                     '''
                 }
             }
