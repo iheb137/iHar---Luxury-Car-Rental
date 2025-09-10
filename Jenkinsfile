@@ -4,7 +4,7 @@ pipeline {
     environment {
         DOCKER_IMAGE_NAME = "iheb99/luxury-car-rental"
         DOCKER_IMAGE_TAG = "${env.BUILD_NUMBER}"
-        DOCKER_CREDENTIALS_ID = 'dockerhub-credentials'
+        DOCKER_CREDENTIALS_ID = 'dockerhub-cred'
         KUBE_DEPLOYMENT_NAME = 'ihar-deployment'
         KUBE_NAMESPACE = 'ihar'
         // CHEMIN VERS LE FICHIER KUBECONFIG DANS LE CONTENEUR
