@@ -2,152 +2,82 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "iheb99/luxury-car-rental"
-        DOCKER_CREDENTIALS_ID = "dockerhub-cred"
-        K8S_TOKEN_CREDENTIALS_ID = "jenkins-k8s-token"
-        K8S_SERVER_URL = "https://localhost:6443"
-        K8S_CLUSTER_NAME = "docker-desktop"
-        K8S_CONTEXT_NAME = "docker-desktop"
-        GIT_CREDENTIALS_ID = "iheb"
+        // Le nom de votre image sur Docker Hub.
+        // Remplacez 'iheb99' par votre nom d'utilisateur Docker Hub si différent.
+        DOCKER_IMAGE_NAME = "iheb99/luxury-car-rental"
+        
+        // Un tag unique pour chaque build, basé sur le numéro du build Jenkins.
+        // Exemple : iheb99/luxury-car-rental:1, iheb99/luxury-car-rental:2, etc.
+        DOCKER_IMAGE_TAG = "${env.BUILD_NUMBER}"
+        
+        // L'ID de vos identifiants Docker Hub dans Jenkins.
+        // Vous devez créer cet identifiant dans "Manage Jenkins" > "Credentials".
+        DOCKER_CREDENTIALS_ID = 'dockerhub-cred' // IMPORTANT: À créer dans Jenkins
+        
+        // Le nom de votre déploiement dans Kubernetes.
+        KUBE_DEPLOYMENT_NAME = 'ihar-deployment'
+        
+        // Le namespace (espace de nom) dans Kubernetes où déployer.
+        KUBE_NAMESPACE = 'ihar'
     }
 
     stages {
-        stage('Checkout Code') {
+        stage('1. Checkout Code') {
             steps {
-                git(
-                    url: 'https://github.com/iheb137/iHar---Luxury-Car-Rental.git',
-                    credentialsId: env.GIT_CREDENTIALS_ID,
-                    branch: 'master'
-                )
+                echo 'Récupération du code source...'
+                // Récupère le code depuis le dépôt Git configuré dans le job Jenkins
+                checkout scm
             }
         }
 
-        stage('Build & Push Docker Image') {
+        stage('2. Build Docker Image') {
             steps {
                 script {
-                    sh "docker build -t ${env.DOCKER_IMAGE}:latest ."
-                    withCredentials([usernamePassword(
-                        credentialsId: env.DOCKER_CREDENTIALS_ID,
-                        usernameVariable: 'DOCKER_USER',
-                        passwordVariable: 'DOCKER_PASS'
-                    )]) {
-                        sh """
-                            echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin
-                            docker push ${env.DOCKER_IMAGE}:latest
-                        """
+                    echo "Construction de l'image : ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}"
+                    // Construit l'image Docker en utilisant le Dockerfile à la racine du projet
+                    docker.build(DOCKER_IMAGE_NAME, "--tag ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} .")
+                }
+            }
+        }
+
+        stage('3. Push Docker Image') {
+            steps {
+                script {
+                    echo "Publication de l'image sur Docker Hub..."
+                    // Utilise les identifiants Docker Hub configurés dans Jenkins pour se connecter et pousser l'image
+                    docker.withRegistry('https://registry.hub.docker.com', DOCKER_CREDENTIALS_ID ) {
+                        docker.image(DOCKER_IMAGE_NAME).push(DOCKER_IMAGE_TAG)
                     }
                 }
             }
         }
 
-        stage('Deploy to Kubernetes') {
+        stage('4. Deploy to Kubernetes') {
             steps {
-                script {
-                    withKubeConfig([
-                        credentialsId: env.K8S_TOKEN_CREDENTIALS_ID,
-                        serverUrl: env.K8S_SERVER_URL,
-                        clusterName: env.K8S_CLUSTER_NAME,
-                        contextName: env.K8S_CONTEXT_NAME
-                    ]) {
-                        sh """
-                            echo "=== VÉRIFICATION CONNEXION KUBERNETES ==="
-                            kubectl cluster-info
-                            kubectl get nodes
-                            
-                            echo "=== DÉPLOIEMENT APPLICATION ==="
-                            
-                            # Créer le namespace si nécessaire
-                            kubectl create namespace ihar --dry-run=client -o yaml | kubectl apply -f -
-                            
-                            # Déployer MySQL
-                            if [ -f "k8s/mysql.yaml" ]; then
-                                kubectl apply -f k8s/mysql.yaml -n ihar
-                                echo "Attente du démarrage de MySQL..."
-                                sleep 10
-                            fi
-                            
-                            # Mettre à jour l'image dans le deployment
-                            if [ -f "k8s/deployment.yaml" ]; then
-                                sed -i 's|image: .*|image: ${env.DOCKER_IMAGE}:latest|g' k8s/deployment.yaml
-                                kubectl apply -f k8s/deployment.yaml -n ihar
-                            else
-                                # Créer un deployment basique si le fichier n'existe pas
-                                kubectl create deployment luxury-car-rental \
-                                    --image=${env.DOCKER_IMAGE}:latest \
-                                    --port=80 \
-                                    -n ihar --dry-run=client -o yaml | kubectl apply -f -
-                            fi
-                            
-                            # Exposer le service
-                            if [ -f "k8s/service.yaml" ]; then
-                                kubectl apply -f k8s/service.yaml -n ihar
-                            else
-                                kubectl expose deployment luxury-car-rental \
-                                    --port=80 \
-                                    --target-port=80 \
-                                    --type=NodePort \
-                                    -n ihar --dry-run=client -o yaml | kubectl apply -f -
-                            fi
-                            
-                            echo "=== VÉRIFICATION DÉPLOIEMENT ==="
-                            kubectl get deployments,services,pods -n ihar
-                            
-                            echo "=== ATTENTE DISPONIBILITÉ ==="
-                            kubectl rollout status deployment/luxury-car-rental -n ihar --timeout=120s || true
-                        """
-                    }
-                }
-            }
-        }
-
-        stage('Health Check') {
-            steps {
-                script {
-                    withKubeConfig([credentialsId: env.K8S_TOKEN_CREDENTIALS_ID]) {
-                        sh """
-                            echo "=== TEST SANTÉ APPLICATION ==="
-                            # Récupérer l'URL du service
-                            SERVICE_URL=\$(kubectl get svc luxury-car-rental -n ihar -o jsonpath='{.status.loadBalancer.ingress[0].ip}' || echo "localhost")
-                            SERVICE_PORT=\$(kubectl get svc luxury-car-rental -n ihar -o jsonpath='{.spec.ports[0].nodePort}')
-                            
-                            echo "Application accessible à: http://\${SERVICE_URL}:\${SERVICE_PORT}"
-                            
-                            # Test de santé simple
-                            curl -I http://localhost:\${SERVICE_PORT} || echo "Test curl échoué mais déploiement terminé"
-                        """
-                    }
-                }
+                echo "Déploiement de la nouvelle version sur Kubernetes..."
+                // Met à jour l'image du déploiement dans Kubernetes avec la nouvelle image que nous venons de pousser.
+                // C'est la commande la plus sûre pour mettre à jour une application existante.
+                sh "kubectl set image deployment/${KUBE_DEPLOYMENT_NAME} app=${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} -n ${KUBE_NAMESPACE}"
             }
         }
     }
 
     post {
         always {
-            echo "=== NETTOYAGE ==="
-            cleanWs()
+            // Cette section s'exécute toujours, que le build réussisse ou échoue.
+            echo 'Nettoyage de l\'espace de travail...'
+            cleanWs() // Nettoie l'espace de travail pour le prochain build
         }
         success {
-            echo "✅ DÉPLOIEMENT RÉUSSI !"
-            script {
-                withKubeConfig([credentialsId: env.K8S_TOKEN_CREDENTIALS_ID]) {
-                    sh """
-                        echo "Résumé du déploiement:"
-                        kubectl get all -n ihar
-                    """
-                }
-            }
+            // S'exécute uniquement si toutes les étapes ont réussi.
+            echo '✅ Déploiement terminé avec succès !'
         }
         failure {
-            echo "❌ ÉCHEC DU DÉPLOIEMENT"
-            script {
-                withKubeConfig([credentialsId: env.K8S_TOKEN_CREDENTIALS_ID]) {
-                    sh """
-                        echo "Logs des pods:"
-                        kubectl get pods -n ihar
-                        kubectl describe pods -n ihar
-                    """
-                }
-            }
+            // S'exécute uniquement si une étape a échoué.
+            echo '❌ ÉCHEC DU DÉPLOIEMENT. Vérification des logs...'
+            // Tente de récupérer les logs des pods pour aider au débogage.
+            sh "kubectl get pods -n ${KUBE_NAMESPACE}"
+            sh "kubectl logs deployment/${KUBE_DEPLOYMENT_NAME} -n ${KUBE_NAMESPACE} --tail=50"
         }
     }
 }
