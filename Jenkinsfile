@@ -2,14 +2,25 @@ pipeline {
     agent any
 
     environment {
+        // Nom de votre image sur Docker Hub
         DOCKER_IMAGE_NAME     = "iheb99/luxury-car-rental"
+        
+        // Tag unique pour chaque build, basé sur le numéro du build Jenkins
         DOCKER_IMAGE_TAG      = "${env.BUILD_NUMBER}"
-        DOCKER_CREDENTIALS_ID = 'dockerhub-cred' // Assurez-vous que cet ID est correct
+        
+        // L'ID de vos identifiants Docker Hub dans Jenkins
+        DOCKER_CREDENTIALS_ID = 'dockerhub-cred' // Tel que vous l'avez spécifié
+        
+        // Le nom de votre déploiement dans Kubernetes
         KUBE_DEPLOYMENT_NAME  = 'ihar-deployment'
+        
+        // Le namespace (espace de nom) dans Kubernetes où déployer
         KUBE_NAMESPACE        = 'ihar'
-        // On définit le chemin du fichier de config DANS le conteneur
-        KUBECONFIG_PATH       = '/home/jenkins/.kube/config'
-        // On définit l'URL du serveur à contacter
+        
+        // Le chemin absolu vers le fichier de config DANS le conteneur
+        KUBECONFIG_PATH       = '/kube-config/config'
+        
+        // L'URL du serveur Kubernetes à contacter depuis le conteneur
         KUBE_SERVER_URL       = 'https://host.docker.internal:6443'
     }
 
@@ -23,9 +34,16 @@ pipeline {
 
         stage('2. Build and Push Docker Image') {
             steps {
+                // Utilise les identifiants pour se connecter à Docker Hub via la ligne de commande
                 withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIALS_ID, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    
+                    echo "Construction de l'image : ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}"
                     sh "docker build -t ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} ."
+                    
+                    echo "Connexion à Docker Hub..."
                     sh "echo ${DOCKER_PASS} | docker login -u ${DOCKER_USER} --password-stdin"
+                    
+                    echo "Publication de l'image..."
                     sh "docker push ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}"
                 }
             }
@@ -34,10 +52,10 @@ pipeline {
         stage('3. Deploy to Kubernetes') {
             steps {
                 echo "Déploiement vers Kubernetes..."
-                // Approche "ceinture et bretelles" : on spécifie TOUT.
-                // 1. On dit où est le fichier de config (pour les certificats).
-                // 2. On dit où est le serveur (pour éviter le proxy).
-                // 3. On désactive la vérification TLS (car le nom ne correspond pas).
+                // Commande kubectl finale, explicite et autonome
+                // 1. --kubeconfig pointe vers le fichier de config monté
+                // 2. --server pointe vers l'URL correcte de l'hôte
+                // 3. --insecure-skip-tls-verify gère le conflit de nom de certificat
                 sh """
                     kubectl set image deployment/${KUBE_DEPLOYMENT_NAME} app=${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} -n ${KUBE_NAMESPACE} \
                     --kubeconfig=${KUBECONFIG_PATH} \
@@ -50,13 +68,14 @@ pipeline {
 
     post {
         always {
+            echo 'Nettoyage de l\'espace de travail...'
             cleanWs()
         }
         success {
-            echo '✅ PIPELINE TERMINÉ AVEC SUCCÈS !'
+            echo '✅ PIPELINE TERMINÉ AVEC SUCCÈS ! Mission accomplie !'
         }
         failure {
-            echo '❌ ÉCHEC DU DÉPLOIEMENT.'
+            echo '❌ ÉCHEC DU DÉPLOIEMENT. Vérifiez les logs ci-dessus.'
         }
     }
 }
