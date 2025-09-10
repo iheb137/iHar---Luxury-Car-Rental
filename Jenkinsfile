@@ -9,7 +9,7 @@ pipeline {
         DOCKER_IMAGE_TAG      = "${env.BUILD_NUMBER}"
         
         // L'ID de vos identifiants Docker Hub dans Jenkins
-        DOCKER_CREDENTIALS_ID = 'dockerhub-cred' // Tel que vous l'avez spécifié
+        DOCKER_CREDENTIALS_ID = 'dockerhub-cred' 
         
         // Le nom de votre déploiement dans Kubernetes
         KUBE_DEPLOYMENT_NAME  = 'ihar-deployment'
@@ -34,7 +34,6 @@ pipeline {
 
         stage('2. Build and Push Docker Image') {
             steps {
-                // Utilise les identifiants pour se connecter à Docker Hub via la ligne de commande
                 withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIALS_ID, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                     
                     echo "Construction de l'image : ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}"
@@ -52,12 +51,9 @@ pipeline {
         stage('3. Deploy to Kubernetes') {
             steps {
                 echo "Déploiement vers Kubernetes..."
-                // Commande kubectl finale, explicite et autonome
-                // 1. --kubeconfig pointe vers le fichier de config monté
-                // 2. --server pointe vers l'URL correcte de l'hôte
-                // 3. --insecure-skip-tls-verify gère le conflit de nom de certificat
+                // CORRECTION FINALE : Le nom du conteneur est 'ihar-deployment'
                 sh """
-                    kubectl set image deployment/${KUBE_DEPLOYMENT_NAME} app=${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} -n ${KUBE_NAMESPACE} \
+                    kubectl set image deployment/${KUBE_DEPLOYMENT_NAME} ihar-deployment=${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} -n ${KUBE_NAMESPACE} \
                     --kubeconfig=${KUBECONFIG_PATH} \
                     --server=${KUBE_SERVER_URL} \
                     --insecure-skip-tls-verify=true
