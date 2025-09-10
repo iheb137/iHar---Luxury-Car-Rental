@@ -25,7 +25,15 @@ pipeline {
     }
 
     stages {
-        stage('1. Checkout Code' ) {
+        // ÉTAPE AJOUTÉE POUR FORCER LE NETTOYAGE
+        stage('0. Clean Workspace' ) {
+            steps {
+                echo 'Nettoyage de l\'espace de travail avant le build...'
+                cleanWs()
+            }
+        }
+
+        stage('1. Checkout Code') {
             steps {
                 echo 'Récupération du code source...'
                 checkout scm
@@ -51,7 +59,7 @@ pipeline {
         stage('3. Deploy to Kubernetes') {
             steps {
                 echo "Déploiement vers Kubernetes..."
-                // CORRECTION FINALE : Utilisation du nom de conteneur correct 'luxury-car-rental'
+                // Utilisation du nom de conteneur correct 'luxury-car-rental'
                 sh """
                     kubectl set image deployment/${KUBE_DEPLOYMENT_NAME} luxury-car-rental=${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} -n ${KUBE_NAMESPACE} \
                     --kubeconfig=${KUBECONFIG_PATH} \
@@ -63,10 +71,7 @@ pipeline {
     }
 
     post {
-        always {
-            echo 'Nettoyage de l\'espace de travail...'
-            cleanWs()
-        }
+        // La section 'always' n'est plus nécessaire car on nettoie au début
         success {
             echo '✅ PIPELINE TERMINÉ AVEC SUCCÈS ! Mission accomplie !'
         }
