@@ -4,15 +4,16 @@ pipeline {
     environment {
         DOCKER_IMAGE_NAME = "iheb99/luxury-car-rental"
         DOCKER_IMAGE_TAG = "${env.BUILD_NUMBER}"
-        DOCKER_CREDENTIALS_ID = 'dockerhub-cred'
+        DOCKER_CREDENTIALS_ID = 'dockerhub-credentials'
         KUBE_DEPLOYMENT_NAME = 'ihar-deployment'
         KUBE_NAMESPACE = 'ihar'
-        // AJOUT DE L'ADRESSE DU SERVEUR KUBERNETES
-        KUBE_SERVER_URL = 'https://host.docker.internal:6443'
+        // CHEMIN VERS LE FICHIER KUBECONFIG DANS LE CONTENEUR
+        KUBECONFIG_PATH = '/root/.kube/config'
     }
 
     stages {
-        stage('1. Checkout Code' ) {
+        // ... les étapes 1 et 2 ne changent pas ...
+        stage('1. Checkout Code') {
             steps {
                 echo 'Récupération du code source...'
                 checkout scm
@@ -24,10 +25,8 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIALS_ID, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                     echo "Construction de l'image : ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}"
                     sh "docker build -t ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} ."
-                    
                     echo "Connexion à Docker Hub..."
                     sh "echo ${DOCKER_PASS} | docker login -u ${DOCKER_USER} --password-stdin"
-                    
                     echo "Publication de l'image..."
                     sh "docker push ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}"
                 }
@@ -36,12 +35,11 @@ pipeline {
 
         stage('3. Deploy to Kubernetes') {
             steps {
-                echo "Déploiement vers le serveur Kubernetes à l'adresse ${KUBE_SERVER_URL}..."
-                // MODIFICATION CI-DESSOUS : Ajout de --server et --insecure-skip-tls-verify
+                echo "Déploiement vers Kubernetes en utilisant la configuration de ${KUBECONFIG_PATH}"
+                // On définit la variable d'environnement KUBECONFIG pour la commande sh
                 sh """
-                    kubectl set image deployment/${KUBE_DEPLOYMENT_NAME} app=${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} -n ${KUBE_NAMESPACE} \
-                    --server=${KUBE_SERVER_URL} \
-                    --insecure-skip-tls-verify=true
+                    export KUBECONFIG=${KUBECONFIG_PATH}
+                    kubectl set image deployment/${KUBE_DEPLOYMENT_NAME} app=${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} -n ${KUBE_NAMESPACE}
                 """
             }
         }
@@ -53,7 +51,7 @@ pipeline {
             cleanWs()
         }
         success {
-            echo '✅ PIPELINE TERMINÉ AVEC SUCCÈS !'
+            echo '✅ PIPELINE TERMINÉ AVEC SUCCÈS ! Mission accomplie !'
         }
         failure {
             echo '❌ ÉCHEC DU DÉPLOIEMENT.'
