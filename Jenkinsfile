@@ -51,9 +51,9 @@ pipeline {
         stage('3. Deploy to Kubernetes') {
             steps {
                 echo "Déploiement vers Kubernetes..."
-                // CORRECTION FINALE : Le nom du conteneur est 'ihar-deployment'
+                // CORRECTION FINALE : Utilisation du nom de conteneur correct 'luxury-car-rental'
                 sh """
-                    kubectl set image deployment/${KUBE_DEPLOYMENT_NAME} ihar-deployment=${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} -n ${KUBE_NAMESPACE} \
+                    kubectl set image deployment/${KUBE_DEPLOYMENT_NAME} luxury-car-rental=${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} -n ${KUBE_NAMESPACE} \
                     --kubeconfig=${KUBECONFIG_PATH} \
                     --server=${KUBE_SERVER_URL} \
                     --insecure-skip-tls-verify=true
