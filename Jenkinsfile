@@ -4,8 +4,7 @@ pipeline {
     environment {
         DOCKER_IMAGE_NAME     = "iheb99/luxury-car-rental"
         DOCKER_IMAGE_TAG      = "${env.BUILD_NUMBER}"
-        // IMPORTANT : Vérifiez que l'ID de vos identifiants Docker Hub est bien 'iheb'
-        DOCKER_CREDENTIALS_ID = 'dockerhub-cred' 
+        DOCKER_CREDENTIALS_ID = 'dockerhub-cred' // Assurez-vous que cet ID est correct
         KUBE_DEPLOYMENT_NAME  = 'ihar-deployment'
         KUBE_NAMESPACE        = 'ihar'
     }
@@ -36,8 +35,11 @@ pipeline {
         stage('3. Deploy to Kubernetes') {
             steps {
                 echo "Déploiement vers Kubernetes..."
-                // Plus besoin de 'export KUBECONFIG', car le fichier est maintenant à l'emplacement par défaut.
-                sh "kubectl set image deployment/${KUBE_DEPLOYMENT_NAME} app=${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} -n ${KUBE_NAMESPACE}"
+                // On définit no_proxy pour s'assurer que kubectl ne soit pas intercepté
+                sh """
+                    export no_proxy=host.docker.internal
+                    kubectl set image deployment/${KUBE_DEPLOYMENT_NAME} app=${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} -n ${KUBE_NAMESPACE}
+                """
             }
         }
     }
