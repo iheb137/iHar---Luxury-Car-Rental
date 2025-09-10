@@ -25,15 +25,7 @@ pipeline {
     }
 
     stages {
-        // ÉTAPE AJOUTÉE POUR FORCER LE NETTOYAGE
-        stage('0. Clean Workspace' ) {
-            steps {
-                echo 'Nettoyage de l\'espace de travail avant le build...'
-                cleanWs()
-            }
-        }
-
-        stage('1. Checkout Code') {
+        stage('1. Checkout Code' ) {
             steps {
                 echo 'Récupération du code source...'
                 checkout scm
@@ -71,12 +63,19 @@ pipeline {
     }
 
     post {
-        // La section 'always' n'est plus nécessaire car on nettoie au début
+        // Envoi d'un email à la fin du build, quel que soit le résultat
+        always {
+            echo 'Envoi de la notification par email...'
+            mail to: 'iheb.saafigroup@tek-up.de', // Adresse email configurée
+                 subject: "Build ${currentBuild.fullDisplayName}: ${currentBuild.currentResult}",
+                 body: """<p>Le build <b>${env.JOB_NAME} #${env.BUILD_NUMBER}</b> s'est terminé avec le statut : <b>${currentBuild.currentResult}</b>.</p>
+                          <p>Consultez les logs ici : <a href='${env.BUILD_URL}'>${env.BUILD_URL}</a></p>"""
+        }
         success {
-            echo '✅ PIPELINE TERMINÉ AVEC SUCCÈS ! Mission accomplie !'
+            echo '✅ PIPELINE CI/CD TERMINÉ AVEC SUCCÈS !'
         }
         failure {
-            echo '❌ ÉCHEC DU DÉPLOIEMENT. Vérifiez les logs ci-dessus.'
+            echo '❌ ÉCHEC DU PIPELINE. Vérifiez les logs ci-dessus.'
         }
     }
 }
