@@ -7,10 +7,12 @@ pipeline {
         DOCKER_CREDENTIALS_ID = 'dockerhub-cred'
         KUBE_DEPLOYMENT_NAME = 'ihar-deployment'
         KUBE_NAMESPACE = 'ihar'
+        // AJOUT DE L'ADRESSE DU SERVEUR KUBERNETES
+        KUBE_SERVER_URL = 'https://host.docker.internal:6443'
     }
 
     stages {
-        stage('1. Checkout Code') {
+        stage('1. Checkout Code' ) {
             steps {
                 echo 'Récupération du code source...'
                 checkout scm
@@ -19,19 +21,14 @@ pipeline {
 
         stage('2. Build and Push Docker Image') {
             steps {
-                // Utilise les identifiants pour se connecter à Docker Hub via la ligne de commande
                 withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIALS_ID, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    
                     echo "Construction de l'image : ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}"
-                    // Appel direct à la commande 'docker build'
                     sh "docker build -t ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} ."
                     
                     echo "Connexion à Docker Hub..."
-                    // Appel direct à la commande 'docker login'
                     sh "echo ${DOCKER_PASS} | docker login -u ${DOCKER_USER} --password-stdin"
                     
                     echo "Publication de l'image..."
-                    // Appel direct à la commande 'docker push'
                     sh "docker push ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}"
                 }
             }
@@ -39,9 +36,13 @@ pipeline {
 
         stage('3. Deploy to Kubernetes') {
             steps {
-                echo "Déploiement de la nouvelle version sur Kubernetes..."
-                // Appel direct à la commande 'kubectl'
-                sh "kubectl set image deployment/${KUBE_DEPLOYMENT_NAME} app=${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} -n ${KUBE_NAMESPACE}"
+                echo "Déploiement vers le serveur Kubernetes à l'adresse ${KUBE_SERVER_URL}..."
+                // MODIFICATION CI-DESSOUS : Ajout de --server et --insecure-skip-tls-verify
+                sh """
+                    kubectl set image deployment/${KUBE_DEPLOYMENT_NAME} app=${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} -n ${KUBE_NAMESPACE} \
+                    --server=${KUBE_SERVER_URL} \
+                    --insecure-skip-tls-verify=true
+                """
             }
         }
     }
@@ -52,7 +53,7 @@ pipeline {
             cleanWs()
         }
         success {
-            echo '✅ Déploiement terminé avec succès !'
+            echo '✅ PIPELINE TERMINÉ AVEC SUCCÈS !'
         }
         failure {
             echo '❌ ÉCHEC DU DÉPLOIEMENT.'
